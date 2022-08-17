@@ -6,15 +6,15 @@ const { expect } = require('chai');
 const { BN, expectEvent, expectRevert } = require('@openzeppelin/test-helpers');
 
 // Load compiled artifacts
-const Box = artifacts.require('BoxPro');
+const BoxPro = artifacts.require('BoxPro');
 
 // Start test block
-contract('Box', function ([ owner, other ]) {
+contract('BoxPro', function ([ owner, other ]) {
   // Use large integers ('big numbers')
   const value = new BN('42');
 
   beforeEach(async function () {
-    this.box = await Box.new({ from: owner });
+    this.box = await BoxPro.new({ from: owner });
   });
 
   it('retrieve returns a value previously stored', async function () {
