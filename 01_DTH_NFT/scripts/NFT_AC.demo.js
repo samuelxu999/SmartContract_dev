@@ -5,26 +5,41 @@ const { BN, constants, expectEvent, expectRevert } = require('@openzeppelin/test
 
 const { ZERO_ADDRESS } = constants;
 
+//get address from json file
+function getAddress(node_name){
+	// Load config data from SmartToken.json
+	var addrlist = require('./addr_list.json');	
+	return addrlist[node_name];	
+};
+
 async function main () {
 	// // Our code will go here
 	// // Retrieve accounts from the local node
 	const accounts = await ethers.provider.listAccounts();
-	console.log(accounts);
+	// console.log(accounts);
+	// print all accounts
+	console.log('All accounts:');
+	for (i = 0; i < accounts.length; i++) { 
+		// display one account
+		console.log(`[${i+1}] ${accounts[i]}`);
+	}
+
 	// Set up an ethers contract, representing our deployed Box instance
-	const address = '0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512';
+	var contractAddress = getAddress('NFT_AC');
 	const NFT_AC = await ethers.getContractFactory('NFT_AC');
 
 	const name = 'Non Fungible Token';
 	const symbol = 'NFT';
 
-	const firstTokenId = new BN('5041').toString();
-	console.log(firstTokenId)
+	const token_id = new BN(getAddress('token3')).toString();
+	console.log(`token id:${token_id}`)
 
-	const nft_ac = await NFT_AC.attach(address);
-	// await nft_ac.mint(accounts[0], firstTokenId);
+	mint_account = accounts[0]
+	const nft_ac = await NFT_AC.attach(contractAddress);
+	// await nft_ac.mint(mint_account, token_id);
 
 	const value = await nft_ac.balanceOf(accounts[0]);
-	console.log('nft_ac value is', value.toString());
+	console.log(`${mint_account} has token banalce ${value.toString()}`);
 
 }
 
