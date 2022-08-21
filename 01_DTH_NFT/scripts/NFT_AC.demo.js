@@ -25,20 +25,37 @@ async function main () {
 	}
 
 	// Set up an ethers contract, representing our deployed Box instance
-	var contractAddress = getAddress('NFT_AC');
+	const contractAddress = getAddress('NFT_AC');
 	const NFT_AC = await ethers.getContractFactory('NFT_AC');
-
-	const name = 'Non Fungible Token';
-	const symbol = 'NFT';
-
-	const token_id = new BN(getAddress('token3')).toString();
-	console.log(`token id:${token_id}`)
-
-	mint_account = accounts[0]
 	const nft_ac = await NFT_AC.attach(contractAddress);
-	// await nft_ac.mint(mint_account, token_id);
 
-	const value = await nft_ac.balanceOf(accounts[0]);
+	// get token name and symbol
+	const token_name = await nft_ac.name();
+	const token_symbol = await nft_ac.symbol();
+	console.log(`Token name: ${token_name}, symbol:${token_symbol}`)
+
+	// setup parameters
+	var token = new BN(getAddress('token1')).toString();
+	var mint_account = accounts[0]
+
+	// mint token by mint_account
+	console.log(`mint token_id:${token} by: ${mint_account}`)
+	await nft_ac.mint(mint_account, token);
+
+	// Query token balance of an account
+	var value = await nft_ac.balanceOf(mint_account);
+	console.log(`${mint_account} has token banalce ${value.toString()}`);
+
+	// Query the owner given a token id
+	var owner_address = await nft_ac.ownerOf(token);
+	console.log(`Token id: ${token} has owner ${owner_address}`);
+
+	// burn token in test
+	console.log(`burn token_id:${token}`)
+	await nft_ac.burn(token);
+
+	// Query token balance of an account
+	var value = await nft_ac.balanceOf(mint_account);
 	console.log(`${mint_account} has token banalce ${value.toString()}`);
 
 }
