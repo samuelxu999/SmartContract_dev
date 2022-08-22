@@ -3,14 +3,14 @@
 
 async function main() {
   // We get the NFT_AC contract to deploy
-  const name = 'Non Fungible Token';
-  const symbol = 'NFT';
-  const NFT_AC = await ethers.getContractFactory('NFT_AC');
-  console.log('Deploying NFT_AC...');
-  const nft_ac = await NFT_AC.deploy(name,symbol);
+  const name = 'NFT-CapAC';
+  const symbol = 'CapAC';
+  const NFT_CapAC = await ethers.getContractFactory('NFT_CapAC');
+  console.log('Deploying NFT_CapAC...');
+  const nft_ac = await NFT_CapAC.deploy(name,symbol);
   await nft_ac.deployed();
 
-  console.log('NFT_AC deployed to:', nft_ac.address);
+  console.log('NFT_CapAC deployed to:', nft_ac.address);
 }
 
 // We recommend this pattern to be able to use async/await everywhere
