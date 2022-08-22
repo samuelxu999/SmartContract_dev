@@ -84,11 +84,6 @@ contract NFT_CapAC is ERC721, ERC721Enumerable, Ownable {
                                                         uint256, 
                                                         uint256, 
                                                         string memory) {
-        // uint id = _capAC[tokenId].id;
-        // uint256 issuedate = _capAC[tokenId].issuedate;
-        // uint256 expireddate = _capAC[tokenId].expireddate;
-        // string memory authorization = _capAC[tokenId].authorization;
-
         // return(id, issuedate, expireddate, authorization);  
         return(_capAC[tokenId].id, 
             _capAC[tokenId].issuedate,
@@ -112,21 +107,25 @@ contract NFT_CapAC is ERC721, ERC721Enumerable, Ownable {
     function setCapAC_expireddate(uint256 tokenId, 
                                     uint256 issueddate, 
                                     uint256 expireddate) public {
+        require(ownerOf(tokenId) == msg.sender, "NFT_CapAC: setCapAC_expireddate from incorrect owner");
 
         _capAC[tokenId].id += 1;
         _capAC[tokenId].issuedate = issueddate;
         _capAC[tokenId].expireddate = expireddate;
 
         emit OnCapAC_Update(tokenId, _capAC[tokenId].id);
+
     }
 
     // Assign access rights to a CapAC
     function setCapAC_authorization(uint256 tokenId, 
                                         string memory accessright) public {
-        // if( supervisor == msg.sender) {
+        require(ownerOf(tokenId) == msg.sender, "NFT_CapAC: setCapAC_authorization from incorrect owner");
+
         _capAC[tokenId].id += 1;
         _capAC[tokenId].authorization = accessright;
 
-        emit OnCapAC_Update(tokenId, _capAC[tokenId].id);      
+        emit OnCapAC_Update(tokenId, _capAC[tokenId].id);
+   
     }
 }

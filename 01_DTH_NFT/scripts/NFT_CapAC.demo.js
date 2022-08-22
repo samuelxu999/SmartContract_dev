@@ -101,12 +101,19 @@ const test_CapAC = async () => {
 	var other_account = accounts[1]
 
 	// ---------- mint token by mint_account --------------
-	console.log(`mint token_id:${token} by: ${mint_account}`)
-	await nft_ac.mint(mint_account, token);
+	var token_existed = await nft_ac.exists(token);
+	if(token_existed==false) {
+		console.log(`mint token_id:${token} by: ${mint_account}`)
+		await nft_ac.mint(mint_account, token);		
+	}
+
 
 	// ---------- mint token by other_account --------------
-	console.log(`mint token_id:${other_token} by: ${other_account}`)
-	await nft_ac.mint(other_account, other_token);
+	var token_existed = await nft_ac.exists(other_token);
+	if(token_existed==false) {
+		console.log(`mint token_id:${other_token} by: ${other_account}`)
+		await nft_ac.mint(other_account, other_token);
+	}
 
 	// Query totalSupply of current NFT
 	var value = await nft_ac.totalSupply();
@@ -118,24 +125,31 @@ const test_CapAC = async () => {
 	var value = await nft_ac.query_CapAC(other_token);
 	console.log(`query_CapAC token_id:${other_token}, CapAC:${value}`)
 
-	// update CapAC1
+	// update CapAC1 by owner
 	console.log(`set setCapAC_expireddate token_id:${token} by: ${mint_account}`)
 	await nft_ac.setCapAC_expireddate(token, 12345, 67890);
 
 	console.log(`set setCapAC_authorization token_id:${token} by: ${mint_account}`)
 	await nft_ac.setCapAC_authorization(token, 'samuel has access!');
 
-	var value = await nft_ac.query_CapAC(token);
-	console.log(`query_CapAC token_id:${token}, CapAC:${value}`)
-	var value = await nft_ac.query_CapAC(other_token);
-	console.log(`query_CapAC token_id:${other_token}, CapAC:${value}`)
-
-	// update CapAC2
+	// update CapAC2 by non-owner
 	console.log(`set setCapAC_expireddate token_id:${other_token} by: ${other_account}`)
-	await nft_ac.setCapAC_expireddate(other_token, 0, 0);
+	try {
+  	await nft_ac.setCapAC_expireddate(other_token, 0, 0);
+	} catch (error) {
+	  console.error(error);
+	  // expected output: ReferenceError: nonExistentFunction is not defined
+	  // Note - error messages will vary depending on browser
+	}
 
 	console.log(`set setCapAC_authorization token_id:${other_token} by: ${other_account}`)
-	await nft_ac.setCapAC_authorization(other_token, 'samuel has no access!');
+	try {
+		await nft_ac.setCapAC_authorization(other_token, 'samuel has no access!');
+	} catch (error) {
+	  console.error(error);
+	  // expected output: ReferenceError: nonExistentFunction is not defined
+	  // Note - error messages will vary depending on browser
+	}
 
 	var value = await nft_ac.query_CapAC(token);
 	console.log(`query_CapAC token_id:${token}, CapAC:${value}`)
