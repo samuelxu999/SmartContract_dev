@@ -46,6 +46,10 @@ async function main () {
 	var value = await nft_ac.balanceOf(mint_account);
 	console.log(`${mint_account} has token banalce ${value.toString()}`);
 
+	// Check if a token existed
+	var token_existed = await nft_ac.exists(token);
+	console.log(`Token id: ${token} exists: ${token_existed}`);
+
 	// Query the owner given a token id
 	var owner_address = await nft_ac.ownerOf(token);
 	console.log(`Token id: ${token} has owner ${owner_address}`);
@@ -54,6 +58,10 @@ async function main () {
 	console.log(`burn token_id:${token}`)
 	await nft_ac.burn(token);
 
+	// Check if a token existed
+	var token_existed = await nft_ac.exists(token);
+	console.log(`Token id: ${token} exists: ${token_existed}`);
+	
 	// Query token balance of an account
 	var value = await nft_ac.balanceOf(mint_account);
 	console.log(`${mint_account} has token banalce ${value.toString()}`);
