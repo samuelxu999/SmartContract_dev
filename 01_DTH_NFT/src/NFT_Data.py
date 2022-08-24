@@ -13,8 +13,6 @@ import json, datetime, time
 import sys
 import argparse
 
-from utilities import DatetimeUtil, TypesUtil
-
 class NFT_Data(object):
 	def __init__(self, http_provider, contract_addr, contract_config):
 		# configuration initialization
@@ -69,7 +67,7 @@ class NFT_Data(object):
 		else:
 			print('Token {} is not existed'.format(tokenId))
 
-	## setCapAC_expireddate
+	## set baseURI
 	def set_baseURI(self, _baseURI):
 		print('setBaseURI'.format())
 		tx_hash = self.contract.functions.setBaseURI(_baseURI).transact({'from': self.web3.eth.coinbase})
@@ -77,7 +75,7 @@ class NFT_Data(object):
 		print(receipt)
 
 
-	## setCapAC_authorization
+	## set tokenURI
 	def set_tokenURI(self, tokenId, _tokenURI):
 		token_existed = self.contract.functions.exists(int(tokenId)).call({'from': self.web3.eth.coinbase})
 		if(token_existed):
@@ -88,10 +86,8 @@ class NFT_Data(object):
 		else:
 			print('Token {} is not existed'.format(tokenId))
 
-	## query value from a token
+	## query data from a token, like baseURI and tokenURI
 	def query_Data(self, tokenId):
-		## call getTokens()
-		# token_value = self.contract.functions.baseURI(int(tokenId)).call({'from': self.web3.eth.coinbase})
 		base_URI = self.contract.functions.baseURI().call({'from': self.web3.eth.coinbase})
 
 		token_existed = self.contract.functions.exists(int(tokenId)).call({'from': self.web3.eth.coinbase})
@@ -106,14 +102,16 @@ class NFT_Data(object):
 
 def define_and_get_arguments(args=sys.argv[1:]):
     parser = argparse.ArgumentParser(
-        description="Run NFT_CapAC."
+        description="Run NFT_Data."
     )
     parser.add_argument("--test_op", type=int, default=0, 
                         help="Execute test operation: \
                         0-contract information, \
-                        1-get_token, \
-                        2-deposit_value, \
-                        3-withdraw_value")
+                        1-query_Data, \
+                        2-mint_Data, \
+                        3-burn_Data, \
+                        4-set_baseURI, \
+                        5-set_tokenURI")
 
     parser.add_argument("--op_status", type=int, default="0", 
                         help="input sub operation")
