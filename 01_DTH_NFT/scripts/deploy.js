@@ -13,7 +13,7 @@ async function main() {
   console.log('NFT_CapAC deployed to:', nft_ac.address);
   
   // We get the NFT_Data contract to deploy
-  name = 'NFT_Data';
+  name = 'NFT-Data';
   symbol = 'Data';
   const NFT_Data = await ethers.getContractFactory('NFT_Data');
   console.log('Deploying NFT_Data...');
