@@ -47,10 +47,6 @@ contract NFT_CapAC is ERC721, ERC721Enumerable, Ownable {
         return super.supportsInterface(interfaceId);
     }
 
-    function baseURI() public view returns (string memory) {
-        return _baseURI();
-    }
-
     function exists(uint256 tokenId) public view returns (bool) {
         return _exists(tokenId);
     }

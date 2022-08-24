@@ -23,7 +23,7 @@ screen -r hardhat_node  // attach hardhat_node screen session
 ```shell
 npx hardhat compile		// compile all contracts
 npx hardhat run --network localhost scripts/deploy.js	// deploy contracts on local hardhat network
-npx hardhat run --network localhost ./scripts/index.js	// execute *demo.js scripts
+npx hardhat run --network localhost ./scripts/*.js	// execute *demo.js scripts
 npx hardhat test		// execute unit test cases
 ````
 
