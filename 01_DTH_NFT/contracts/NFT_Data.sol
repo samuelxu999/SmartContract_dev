@@ -8,11 +8,27 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 
 /**
  * @title NFT_Data
- * This provides a public functions for testing purposes
+ * This provides a public functions for testing purposes, like data sharing
  */
 contract NFT_Data is ERC721, ERC721Enumerable, ERC721URIStorage, Ownable {
-
+	// save base URI for contract
 	string private _base_URI = "";
+
+    /*
+        Define struct to represent data object.
+    */
+    struct DataAC {
+        uint id;                // incremental id
+        string ref_address;   	// reference address (hash string) of data
+        string data_mac;   		// authentor for data integrity
+        string authorization;   // authronized access rights
+    }
+
+    // Mapping from token ID to DataAC
+    mapping(uint256 => DataAC) private _dataAC;
+
+    // event handle function
+    event OnDataAC_Update(uint256 tokenId, uint _value);
 
     constructor(string memory name, string memory symbol) ERC721(name, symbol) {}
 
@@ -39,10 +55,16 @@ contract NFT_Data is ERC721, ERC721Enumerable, ERC721URIStorage, Ownable {
 
         // mint a TokenURI given tokenId
         _setTokenURI(tokenId,'');
+
+        // mint a DataAC given tokenId
+        _mintDataAC(tokenId);
     }
 
     function _burn(uint256 tokenId) internal override(ERC721, ERC721URIStorage) {
         super._burn(tokenId);
+        
+        // mint a DataAC given tokenId
+        _burnDataAC(tokenId);
     }
 
     function burn(uint256 tokenId) public {
@@ -85,53 +107,52 @@ contract NFT_Data is ERC721, ERC721Enumerable, ERC721URIStorage, Ownable {
     	_setTokenURI(tokenId,_tokenURI);
     }
 
+    // DataAC functions
+    function query_DataAC(uint256 tokenId) public view returns (uint, 
+                                                        string memory, 
+                                                        string memory, 
+                                                        string memory) {
+        return(_dataAC[tokenId].id, 
+            _dataAC[tokenId].ref_address,
+            _dataAC[tokenId].data_mac,
+            _dataAC[tokenId].authorization
+            );      
+    }
 
-    // function query_CapAC(uint256 tokenId) public view returns (uint, 
-    //                                                     uint256, 
-    //                                                     uint256, 
-    //                                                     string memory) {
-    //     // return(id, issuedate, expireddate, authorization);  
-    //     return(_capAC[tokenId].id, 
-    //         _capAC[tokenId].issuedate,
-    //         _capAC[tokenId].expireddate,
-    //         _capAC[tokenId].authorization
-    //         );      
-    // }
+    function _mintDataAC(uint256 tokenId) private {
+        _dataAC[tokenId].id = 1;
+        _dataAC[tokenId].ref_address = '0x00';
+        _dataAC[tokenId].data_mac = '0x00';
+        _dataAC[tokenId].authorization = 'NULL';
+    }
 
-    // function _mintCapAC(uint256 tokenId) private {
-    //     _capAC[tokenId].id = 1;
-    //     _capAC[tokenId].issuedate = 0;
-    //     _capAC[tokenId].expireddate = 0;
-    //     _capAC[tokenId].authorization = 'NULL';
-    // }
+    function _burnDataAC(uint256 tokenId) private {
+        delete _dataAC[tokenId];
+    }
 
-    // function _burnCapAC(uint256 tokenId) private {
-    //     delete _capAC[tokenId];
-    // }
+    // Set data information for a DataAC
+    function setDataAC(uint256 tokenId, 
+                                    string memory ref_address, 
+                                    string memory data_mac) public {
+        require(ownerOf(tokenId) == msg.sender, "NFT_DataAC: setDataAC from incorrect owner");
 
-    // // Set time limitation for a CapAC
-    // function setCapAC_expireddate(uint256 tokenId, 
-    //                                 uint256 issueddate, 
-    //                                 uint256 expireddate) public {
-    //     require(ownerOf(tokenId) == msg.sender, "NFT_CapAC: setCapAC_expireddate from incorrect owner");
+        _dataAC[tokenId].id += 1;
+        _dataAC[tokenId].ref_address = ref_address;
+        _dataAC[tokenId].data_mac = data_mac;
 
-    //     _capAC[tokenId].id += 1;
-    //     _capAC[tokenId].issuedate = issueddate;
-    //     _capAC[tokenId].expireddate = expireddate;
+        emit OnDataAC_Update(tokenId, _dataAC[tokenId].id);
 
-    //     emit OnCapAC_Update(tokenId, _capAC[tokenId].id);
+    }
 
-    // }
+    // Assign access rights to a DataAC
+    function setDataAC_authorization(uint256 tokenId, 
+                                        string memory accessright) public {
+        require(ownerOf(tokenId) == msg.sender, "NFT_DataAC: setDataAC_authorization from incorrect owner");
 
-    // // Assign access rights to a CapAC
-    // function setCapAC_authorization(uint256 tokenId, 
-    //                                     string memory accessright) public {
-    //     require(ownerOf(tokenId) == msg.sender, "NFT_CapAC: setCapAC_authorization from incorrect owner");
+        _dataAC[tokenId].id += 1;
+        _dataAC[tokenId].authorization = accessright;
 
-    //     _capAC[tokenId].id += 1;
-    //     _capAC[tokenId].authorization = accessright;
-
-    //     emit OnCapAC_Update(tokenId, _capAC[tokenId].id);
+        emit OnDataAC_Update(tokenId, _dataAC[tokenId].id);
    
-    // }
+    }
 }

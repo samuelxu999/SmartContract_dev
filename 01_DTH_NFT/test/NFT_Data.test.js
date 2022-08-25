@@ -25,7 +25,8 @@ contract('NFT_Data', function ([ owner, other ]) {
 	const baseURI = 'https://api.example.com/v1/';
 	const newBaseURI = 'https://api.example.com/v2/';
 	const tokenURI = 'test_sample';
-	const RECEIVER_MAGIC_VALUE = '0x150b7a02';
+	const ref_address = '0x9374E09e81d54c190Cd94266EaaD0F2A2b060AF6';
+	const data_mac = '0x438d538a30e577832db65a1de046906f0f3e448308cf0834ac153c8dee728293';
 
 	beforeEach(async function () {
 		this.token = await NFT_Data.new(name, symbol);
@@ -97,6 +98,43 @@ contract('NFT_Data', function ([ owner, other ]) {
 					"ERC721: invalid token ID",
 				);
 			});
+		});
+
+		describe('setDataAC', function () {
+		  context('when the given address owns DataAC', function () {
+	          it('verify ref_address and data_mac', async function () {
+	          	await this.token.setDataAC(firstTokenId, ref_address, data_mac, { from: owner });
+	          	this.data_ac = await this.token.query_DataAC(firstTokenId);
+	          	expect(this.data_ac[1]).to.be.bignumber.equal(ref_address);
+	          	expect(this.data_ac[2]).to.be.bignumber.equal(data_mac);
+	          });
+		  });
+		  context('when the given address does not own DataAC', function () {
+	          it('reverts', async function () {
+	            await expectRevert(
+	              this.token.setDataAC(firstTokenId, ref_address, data_mac, { from: other }),
+	              "NFT_DataAC: setDataAC from incorrect owner",
+	            );
+	          });
+		  });
+		});
+
+		describe('setDataAC_authorization', function () {
+		  context('when the given address owns DataAC', function () {
+	          it('verify authorization', async function () {
+	          	await this.token.setDataAC_authorization(firstTokenId, 'Assign access rights', { from: owner });
+	          	this.data_ac = await this.token.query_DataAC(firstTokenId);
+	          	expect(this.data_ac[3]).to.be.equal('Assign access rights');
+	          });
+		  });
+		  context('when the given address does not own DataAC', function () {
+	          it('reverts', async function () {
+	            await expectRevert(
+	              this.token.setDataAC_authorization(firstTokenId, 'Assign access rights', { from: other }),
+	              'NFT_DataAC: setDataAC_authorization from incorrect owner',
+	            );
+	          });
+		  });
 		});
 	});
 

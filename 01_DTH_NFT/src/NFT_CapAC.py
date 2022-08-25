@@ -109,9 +109,11 @@ def define_and_get_arguments(args=sys.argv[1:]):
     parser.add_argument("--test_op", type=int, default=0, 
                         help="Execute test operation: \
                         0-contract information, \
-                        1-get_token, \
-                        2-deposit_value, \
-                        3-withdraw_value")
+                        1-query_CapAC, \
+                        2-mint_CapAC, \
+                        3-burn_CapAC, \
+                        4-CapAC_expireddate, \
+                        5-CapAC_authorization")
 
     parser.add_argument("--op_status", type=int, default="0", 
                         help="input sub operation")

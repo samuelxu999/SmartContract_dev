@@ -157,6 +157,46 @@ const test_Data = async () => {
 	var value = await nft_data.tokenURI(other_token);
 	console.log(`token_id: ${other_token}, tokenURI: ${value}`);
 
+	// ----------------- Data AC test ---------------------------
+	const ref_address = '0x9374E09e81d54c190Cd94266EaaD0F2A2b060AF6';
+	const data_mac = '0x438d538a30e577832db65a1de046906f0f3e448308cf0834ac153c8dee728293';
+	
+	var value = await nft_data.query_DataAC(token);
+	console.log(`query_DataAC token_id:${token}, DataAC:${value}`)
+	var value = await nft_data.query_DataAC(other_token);
+	console.log(`query_DataAC token_id:${other_token}, DataAC:${value}`)
+
+	// update DataAC1 by owner
+	console.log(`set setDataAC token_id:${token} by: ${mint_account}`)
+	await nft_data.setDataAC(token, ref_address, data_mac);
+
+	console.log(`set setDataAC_authorization token_id:${token} by: ${mint_account}`)
+	await nft_data.setDataAC_authorization(token, 'samuel has access!');
+
+	// update DataAC2 by non-owner
+	console.log(`set setDataAC token_id:${other_token} by: ${other_account}`)
+	try {
+  	await nft_data.setDataAC(other_token, 0, 0);
+	} catch (error) {
+	  console.error(error);
+	  // expected output: ReferenceError: nonExistentFunction is not defined
+	  // Note - error messages will vary depending on browser
+	}
+
+	console.log(`set setDataAC_authorization token_id:${other_token} by: ${other_account}`)
+	try {
+		await nft_data.setDataAC_authorization(other_token, 'samuel has no access!');
+	} catch (error) {
+	  console.error(error);
+	  // expected output: ReferenceError: nonExistentFunction is not defined
+	  // Note - error messages will vary depending on browser
+	}
+
+	var value = await nft_data.query_DataAC(token);
+	console.log(`query_DataAC token_id:${token}, DataAC:${value}`)
+	var value = await nft_data.query_DataAC(other_token);
+	console.log(`query_DataAC token_id:${other_token}, DataAC:${value}`)
+
 
 	// ----------------- burn token in test ------------------
 	console.log(`burn token_id:${token}`)

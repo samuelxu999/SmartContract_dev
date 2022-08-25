@@ -86,6 +86,28 @@ class NFT_Data(object):
 		else:
 			print('Token {} is not existed'.format(tokenId))
 
+	## DataAC_setup
+	def DataAC_setup(self, tokenId, ref_address, data_mac):
+		token_existed = self.contract.functions.exists(int(tokenId)).call({'from': self.web3.eth.coinbase})
+		if(token_existed):
+			print('Token {} setDataAC'.format(tokenId))
+			tx_hash = self.contract.functions.setDataAC(int(tokenId), ref_address, data_mac).transact({'from': self.web3.eth.coinbase})
+			receipt = self.web3.eth.wait_for_transaction_receipt(tx_hash)
+			print(receipt)
+		else:
+			print('Token {} is not existed'.format(tokenId))
+
+	## DataAC_authorization
+	def DataAC_authorization(self, tokenId, ac_right):
+		token_existed = self.contract.functions.exists(int(tokenId)).call({'from': self.web3.eth.coinbase})
+		if(token_existed):
+			print('Token {} setDataAC_authorization'.format(tokenId))
+			tx_hash = self.contract.functions.setDataAC_authorization(int(tokenId), ac_right).transact({'from': self.web3.eth.coinbase})
+			receipt = self.web3.eth.wait_for_transaction_receipt(tx_hash)
+			print(receipt)
+		else:
+			print('Token {} is not existed'.format(tokenId))
+
 	## query data from a token, like baseURI and tokenURI
 	def query_Data(self, tokenId):
 		base_URI = self.contract.functions.baseURI().call({'from': self.web3.eth.coinbase})
@@ -97,7 +119,8 @@ class NFT_Data(object):
 		else:
 			print("Token_id:{}  base_URI:{}".format(tokenId, base_URI))
 
-
+		data_ac = self.contract.functions.query_DataAC(int(tokenId)).call({'from': self.web3.eth.coinbase})
+		print("DataAC,  id:{}  ref_address:{}   data_mac:{}   access_rights:{}".format(data_ac[0], data_ac[1], data_ac[2], data_ac[3]))
 
 
 def define_and_get_arguments(args=sys.argv[1:]):
@@ -111,7 +134,9 @@ def define_and_get_arguments(args=sys.argv[1:]):
                         2-mint_Data, \
                         3-burn_Data, \
                         4-set_baseURI, \
-                        5-set_tokenURI")
+                        5-set_tokenURI, \
+                        6-DataAC_setup, \
+                        7-DataAC_authorization")
 
     parser.add_argument("--op_status", type=int, default="0", 
                         help="input sub operation")
@@ -159,6 +184,13 @@ if __name__ == "__main__":
 		tokenId=NFT_Data.getAddress(args.id)
 		tokenURI = args.value
 		myToken.set_tokenURI(tokenId, tokenURI)
+	elif(args.test_op==6):
+		tokenId=NFT_Data.getAddress(args.id)
+		[ref_address, data_mac] = args.value.split(',')
+		myToken.DataAC_setup(tokenId, ref_address, data_mac)
+	elif(args.test_op==7):
+		tokenId=NFT_Data.getAddress(args.id)
+		myToken.DataAC_authorization(tokenId, args.value)		
 	else:
 		balance = myToken.getBalance(accounts[0])
 		print("Host accounts: %s" %(accounts))
