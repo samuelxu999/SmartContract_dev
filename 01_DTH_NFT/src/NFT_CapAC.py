@@ -48,58 +48,50 @@ class NFT_CapAC(object):
 	def mint_CapAC(self, tokenId, owner):
 		token_existed = self.contract.functions.exists(int(tokenId)).call({'from': self.web3.eth.coinbase})
 		if(not token_existed):
-			#@Change account address to EIP checksum format
+			## Change account address to EIP checksum format
 			checksumAddr = Web3.toChecksumAddress(owner)
-			print('Token {} is mint by {}'.format(tokenId,checksumAddr))
 			tx_hash = self.contract.functions.mint(checksumAddr, int(tokenId)).transact({'from': self.web3.eth.coinbase})
-			receipt = self.web3.eth.wait_for_transaction_receipt(tx_hash)
-			print(receipt)
+			return self.web3.eth.wait_for_transaction_receipt(tx_hash)
 		else:
-			print('Token {} has been mint by {}'.format(tokenId, owner))
+			return None
 
 	## burn a token
 	def burn_CapAC(self, tokenId):
 		token_existed = self.contract.functions.exists(int(tokenId)).call({'from': self.web3.eth.coinbase})
 		if(token_existed):
-			owner = self.contract.functions.ownerOf(int(tokenId)).call({'from': self.web3.eth.coinbase})
-			print('Token {} is burn by owner {}'.format(tokenId,owner))
 			tx_hash = self.contract.functions.burn(int(tokenId)).transact({'from': self.web3.eth.coinbase})
-			receipt = self.web3.eth.wait_for_transaction_receipt(tx_hash)
-			print(receipt)
+			return self.web3.eth.wait_for_transaction_receipt(tx_hash)
 		else:
-			print('Token {} is not existed'.format(tokenId))
+			return None
 
 	## setCapAC_expireddate
 	def CapAC_expireddate(self, tokenId, ini_date, exp_date):
 		token_existed = self.contract.functions.exists(int(tokenId)).call({'from': self.web3.eth.coinbase})
 		if(token_existed):
-			print('Token {} setCapAC_expireddate'.format(tokenId))
 			tx_hash = self.contract.functions.setCapAC_expireddate(int(tokenId), ini_date, exp_date).transact({'from': self.web3.eth.coinbase})
-			receipt = self.web3.eth.wait_for_transaction_receipt(tx_hash)
-			print(receipt)
+			return self.web3.eth.wait_for_transaction_receipt(tx_hash)
 		else:
-			print('Token {} is not existed'.format(tokenId))
+			return None
 
 	## setCapAC_authorization
 	def CapAC_authorization(self, tokenId, ac_right):
 		token_existed = self.contract.functions.exists(int(tokenId)).call({'from': self.web3.eth.coinbase})
 		if(token_existed):
-			print('Token {} setCapAC_authorization'.format(tokenId))
 			tx_hash = self.contract.functions.setCapAC_authorization(int(tokenId), ac_right).transact({'from': self.web3.eth.coinbase})
-			receipt = self.web3.eth.wait_for_transaction_receipt(tx_hash)
-			print(receipt)
+			return self.web3.eth.wait_for_transaction_receipt(tx_hash)
 		else:
-			print('Token {} is not existed'.format(tokenId))
+			return None
+
+	##get owner of a token id
+	def ownerToken(self, tokenId):
+		token_existed = self.contract.functions.exists(int(tokenId)).call({'from': self.web3.eth.coinbase})
+		if(token_existed):
+			return self.contract.functions.ownerOf(int(tokenId)).call({'from': self.web3.eth.coinbase})
+		return None
 
 	## query value from a token
 	def query_CapAC(self, tokenId):
-		#@Change account address to EIP checksum format
-		# checksumAddr = Web3.toChecksumAddress(tokenId)
-
-		## call getTokens()
-		token_value = self.contract.functions.query_CapAC(int(tokenId)).call({'from': self.web3.eth.coinbase})
-		print("Token_id:{}  CapAC:{}".format(tokenId, token_value))
-
+		return self.contract.functions.query_CapAC(int(tokenId)).call({'from': self.web3.eth.coinbase})
 
 
 def define_and_get_arguments(args=sys.argv[1:]):
@@ -143,17 +135,40 @@ if __name__ == "__main__":
 	## switch test cases
 	if(args.test_op==1):
 		tokenId=NFT_CapAC.getAddress(args.id)
-		myToken.query_CapAC(tokenId)
+		token_value = myToken.query_CapAC(tokenId)
+		owner = myToken.ownerToken(tokenId)
+		print("Token_id:{}   owner:{}  CapAC:{}".format(tokenId, owner, token_value))
 	elif(args.test_op==2):
 		tokenId=NFT_CapAC.getAddress(args.id)
 		other_account = NFT_CapAC.getAddress('other_account')
 		if(args.op_status==1):
-			myToken.mint_CapAC(tokenId, other_account)
+			receipt = myToken.mint_CapAC(tokenId, other_account)
+			## print out receipt
+			if(receipt!=None):
+				print('Token {} is mint by {}'.format(tokenId,other_account))
+				print(receipt)
+			else:
+				owner = myToken.ownerToken(tokenId)
+				print('Token {} has been mint by {}'.format(tokenId, owner))
 		else:
-			 myToken.mint_CapAC(tokenId, accounts[0])
+			receipt = myToken.mint_CapAC(tokenId, accounts[0])
+			## print out receipt
+			if(receipt!=None):
+				print('Token {} is mint by {}'.format(tokenId,accounts[0]))
+				print(receipt)
+			else:
+				owner = myToken.ownerToken(tokenId)
+				print('Token {} has been mint by {}'.format(tokenId, owner))
+
 	elif(args.test_op==3):
-		tokenId=NFT_CapAC.getAddress(args.id)
-		myToken.burn_CapAC(tokenId)
+		tokenId = NFT_CapAC.getAddress(args.id)
+		owner = myToken.ownerToken(tokenId)
+		receipt = myToken.burn_CapAC(tokenId)
+		if(receipt!=None):
+			print('Token {} is burn by owner {}'.format(tokenId, owner))
+			print(receipt)
+		else:
+			print('Token {} is not existed'.format(tokenId))
 	elif(args.test_op==4):
 		tokenId=NFT_CapAC.getAddress(args.id)
 
@@ -164,10 +179,20 @@ if __name__ == "__main__":
 		duration = DatetimeUtil.datetime_duration(0, 1, 0, 0)
 		expire_time = DatetimeUtil.datetime_timestamp(nowtime + duration)
 
-		myToken.CapAC_expireddate(tokenId, issue_time, expire_time)
+		receipt = myToken.CapAC_expireddate(tokenId, issue_time, expire_time)
+		if(receipt!=None):
+			print('Token {} setCapAC_expireddate'.format(tokenId))
+			print(receipt)
+		else:
+			print('Token {} is not existed'.format(tokenId))
 	elif(args.test_op==5):
 		tokenId=NFT_CapAC.getAddress(args.id)
-		myToken.CapAC_authorization(tokenId, args.value)
+		receipt = myToken.CapAC_authorization(tokenId, args.value)
+		if(receipt!=None):
+			print('Token {} setCapAC_authorization'.format(tokenId))
+			print(receipt)
+		else:
+			print('Token {} is not existed'.format(tokenId))		
 	else:
 		balance = myToken.getBalance(accounts[0])
 		print("Host accounts: %s" %(accounts))
