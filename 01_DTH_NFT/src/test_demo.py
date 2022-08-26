@@ -198,6 +198,8 @@ def test_sym(args):
 		str_time_exec=" ".join(ls_time_exec)
 		FileUtil.save_testlog('test_results', 'test_sym.log', str_time_exec)
 
+		time.sleep(args.wait_interval)
+
 def test_swarm(args):
 	for i in range(args.tx_round):
 		logger.info("Test run:{}".format(i+1))
@@ -234,6 +236,8 @@ def test_swarm(args):
 
 		str_time_exec=" ".join(ls_time_exec)
 		FileUtil.save_testlog('test_results', 'test_swarm.log', str_time_exec)
+
+		time.sleep(args.wait_interval)
 
 def define_and_get_arguments(args=sys.argv[1:]):
 	parser = argparse.ArgumentParser(
@@ -285,64 +289,85 @@ if __name__ == "__main__":
 
 	## switch test cases
 	if(args.test_func==1):
-		ls_time_exec = []
-		start_time=time.time()
-		query_token(args.id, args.op_status) 
-		logger.info("exec_time: {} ms".format( format( (time.time()-start_time)*1000, '.3f')  ))
-		ls_time_exec.append(format( (time.time()-start_time)*1000, '.3f' ))
-		str_time_exec=" ".join(ls_time_exec)
-		if(args.op_status==1):
-			FileUtil.save_testlog('test_results', 'query_tokenData.log', str_time_exec)
-		else:
-			FileUtil.save_testlog('test_results', 'query_tokenCapAC.log', str_time_exec)
+		for i in range(args.tx_round):			
+			logger.info("Test run:{}".format(i+1))
+			ls_time_exec = []
+			start_time=time.time()
+			query_token(args.id, args.op_status) 
+			logger.info("exec_time: {} ms".format( format( (time.time()-start_time)*1000, '.3f')  ))
+			ls_time_exec.append(format( (time.time()-start_time)*1000, '.3f' ))
+			str_time_exec=" ".join(ls_time_exec)
+			if(args.op_status==1):
+				FileUtil.save_testlog('test_results', 'query_tokenData.log', str_time_exec)
+			else:
+				FileUtil.save_testlog('test_results', 'query_tokenCapAC.log', str_time_exec)
+			time.sleep(args.wait_interval)
 	elif(args.test_func==2):
-		ls_time_exec = []
-		start_time=time.time()
-		receipt = mint_token(args.id, args.value, args.op_status)
-		if(receipt!=None):
-			logger.info("exec_time: {} sec   gasUsed: {}".format( format( time.time()-start_time, '.3f'), receipt['gasUsed'] ))
-			ls_time_exec.append( format( time.time()-start_time, '.3f') )
-			str_time_exec=" ".join(ls_time_exec)
-			if(args.op_status==1):
-				FileUtil.save_testlog('test_results', 'mint_tokenData.log', str_time_exec)
-			else:
-				FileUtil.save_testlog('test_results', 'mint_tokenCapAC.log', str_time_exec)
+		for i in range(args.tx_round):
+			logger.info("Test run:{}".format(i+1))
+			token_id = args.id + i
+			ls_time_exec = []
+			start_time=time.time()
+			receipt = mint_token(token_id, args.value, args.op_status)
+			if(receipt!=None):
+				logger.info("exec_time: {} sec   gasUsed: {}".format( format( time.time()-start_time, '.3f'), receipt['gasUsed'] ))
+				ls_time_exec.append( format( time.time()-start_time, '.3f') )
+				str_time_exec=" ".join(ls_time_exec)
+				if(args.op_status==1):
+					FileUtil.save_testlog('test_results', 'mint_tokenData.log', str_time_exec)
+				else:
+					FileUtil.save_testlog('test_results', 'mint_tokenCapAC.log', str_time_exec)
+			time.sleep(args.wait_interval)
 	elif(args.test_func==3):
-		ls_time_exec = []
-		start_time=time.time()
-		receipt = burn_token(args.id, args.op_status)
-		if(receipt!=None):
-			logger.info("exec_time: {} sec   gasUsed: {}".format( format( time.time()-start_time, '.3f'), receipt['gasUsed'] ))
-			ls_time_exec.append( format( time.time()-start_time, '.3f') )
-			str_time_exec=" ".join(ls_time_exec)
-			if(args.op_status==1):
-				FileUtil.save_testlog('test_results', 'burn_tokenData.log', str_time_exec)
-			else:
-				FileUtil.save_testlog('test_results', 'burn_tokenCapAC.log', str_time_exec)
+		for i in range(args.tx_round):
+			logger.info("Test run:{}".format(i+1))
+			token_id = args.id + i
+			ls_time_exec = []
+			start_time=time.time()
+			receipt = burn_token(token_id, args.op_status)
+			if(receipt!=None):
+				logger.info("exec_time: {} sec   gasUsed: {}".format( format( time.time()-start_time, '.3f'), receipt['gasUsed'] ))
+				ls_time_exec.append( format( time.time()-start_time, '.3f') )
+				str_time_exec=" ".join(ls_time_exec)
+				if(args.op_status==1):
+					FileUtil.save_testlog('test_results', 'burn_tokenData.log', str_time_exec)
+				else:
+					FileUtil.save_testlog('test_results', 'burn_tokenCapAC.log', str_time_exec)
+			time.sleep(args.wait_interval)
 	elif(args.test_func==4):
-		## get dummy data for test
-		ls_parameters = dummy_data(0)
+		for i in range(args.tx_round):
+			logger.info("Test run:{}".format(i+1))
+			token_id = args.id + i
 
-		ls_time_exec = []
-		start_time=time.time()
-		receipt = test_CapAC(args.id, args.op_status, ls_parameters)
-		if(receipt!=None):
-			logger.info("exec_time: {} sec   gasUsed: {}".format( format( time.time()-start_time, '.3f'), receipt['gasUsed'] ))
-			ls_time_exec.append( format( time.time()-start_time, '.3f') )
-			str_time_exec=" ".join(ls_time_exec)
-			FileUtil.save_testlog('test_results', 'update_CapAC.log', str_time_exec)
+			## get dummy data for test
+			ls_parameters = dummy_data(0)
+
+			ls_time_exec = []
+			start_time=time.time()
+			receipt = test_CapAC(token_id, args.op_status, ls_parameters)
+			if(receipt!=None):
+				logger.info("exec_time: {} sec   gasUsed: {}".format( format( time.time()-start_time, '.3f'), receipt['gasUsed'] ))
+				ls_time_exec.append( format( time.time()-start_time, '.3f') )
+				str_time_exec=" ".join(ls_time_exec)
+				FileUtil.save_testlog('test_results', 'update_CapAC.log', str_time_exec)
+			time.sleep(args.wait_interval)
 	elif(args.test_func==5):
-		## get dummy data for test
-		ls_parameters = dummy_data(1)
+		for i in range(args.tx_round):
+			logger.info("Test run:{}".format(i+1))
+			token_id = args.id + i
+			
+			## get dummy data for test
+			ls_parameters = dummy_data(1)
 
-		ls_time_exec = []
-		start_time=time.time()
-		receipt = test_Data(args.id, args.op_status, ls_parameters)
-		if(receipt!=None):
-			logger.info("exec_time: {} sec   gasUsed: {}".format( format( time.time()-start_time, '.3f'), receipt['gasUsed'] ))
-			ls_time_exec.append( format( time.time()-start_time, '.3f') )
-			str_time_exec=" ".join(ls_time_exec)
-			FileUtil.save_testlog('test_results', 'update_DataAC.log', str_time_exec)
+			ls_time_exec = []
+			start_time=time.time()
+			receipt = test_Data(token_id, args.op_status, ls_parameters)
+			if(receipt!=None):
+				logger.info("exec_time: {} sec   gasUsed: {}".format( format( time.time()-start_time, '.3f'), receipt['gasUsed'] ))
+				ls_time_exec.append( format( time.time()-start_time, '.3f') )
+				str_time_exec=" ".join(ls_time_exec)
+				FileUtil.save_testlog('test_results', 'update_DataAC.log', str_time_exec)
+			time.sleep(args.wait_interval)
 	elif(args.test_func==10):
 		test_sym(args)
 	elif(args.test_func==11):
