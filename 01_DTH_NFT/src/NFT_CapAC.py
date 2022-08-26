@@ -93,6 +93,13 @@ class NFT_CapAC(object):
 	def query_CapAC(self, tokenId):
 		return self.contract.functions.query_CapAC(int(tokenId)).call({'from': self.web3.eth.coinbase})
 
+	## query totalSupply of tokens
+	def query_totalSupply(self):
+		return self.contract.functions.totalSupply().call({'from': self.web3.eth.coinbase})
+
+	## query tokenId by index in totalSupply
+	def query_tokenByIndex(self, index):
+		return self.contract.functions.tokenByIndex(int(index)).call({'from': self.web3.eth.coinbase})
 
 def define_and_get_arguments(args=sys.argv[1:]):
     parser = argparse.ArgumentParser(
@@ -195,5 +202,11 @@ if __name__ == "__main__":
 			print('Token {} is not existed'.format(tokenId))		
 	else:
 		balance = myToken.getBalance(accounts[0])
-		print("Host accounts: %s" %(accounts))
+		total_supply = myToken.query_totalSupply()
+		print("host accounts: %s" %(accounts))
 		print("coinbase balance:%d" %(balance))
+		print("total supply: %d" %(total_supply))
+		ls_token = []
+		for idx in range(total_supply):
+			ls_token.append(myToken.query_tokenByIndex(idx))
+		print(ls_token)
