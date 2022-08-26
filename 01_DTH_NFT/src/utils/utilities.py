@@ -15,6 +15,7 @@ import json
 import pickle
 import glob, os, fnmatch
 import codecs
+import csv
 
 '''
 FileUtil class for handling file data
@@ -53,77 +54,23 @@ class FileUtil(object):
 		
 		#close file
 		fname.close()
-	
-	@staticmethod
-	def AddDataByLine(filepath, ls_data):
-		'''
-		Function: write list data to file by each line
-		@arguments: 
-		(in)  filepath:   	input file path
-		(in)  ls_data:   	list data for writing
-		'''
-		#define file handle to open select file for write data
-		fname = open(filepath, 'w') 
-		
-		#for each lines in data and write to file
-		for linedata in ls_data:
-			#write line data to file
-			fname.write("%s\n" %(linedata))
-		
-		#close file
-		fname.close()
-	
-	@staticmethod
-	def DeleteLine(filepath, str_target):
-		'''
-		Function: remove line containing target string from file
-		@arguments: 
-		(in)  filepath:   	input file path
-		(in)  str_target:   target string for delete
-		'''
-		#First, read all data from file
-		fname = open(filepath, 'r')   
-		ls_lines=fname.readlines()	
-		fname.close()	
-
-		#reopen file with 'w' option
-		fname = open(filepath, 'w')
-		
-		#for each line to rewrite all data except ls_data
-		for line in ls_lines:
-			if((str_target in line) or line=='\n'):
-				continue
-			#write line data to file
-			fname.write("%s" %(line))
-		#close file
-		fname.close()
 
 	@staticmethod
-	def UpdateLine(filepath, str_target, str_line):
+	def csv_read(csv_file):
 		'''
-		Function: update line containing target string in file
+		Function: Read data from csv file
 		@arguments: 
-		(in)  filepath:   	input file path
-		(in)  str_target:   target string for delete
-		'''	
-		#First, read all data from file
-		fname = open(filepath, 'r')   
-		ls_lines=fname.readlines()	
-		fname.close()	
-
-		#reopen file with 'w' option
-		fname = open(filepath, 'w')
-		
-		#for each line to rewrite all data
-		for line in ls_lines:
-			if(str_target in line):
-				#write updated data to file
-				fname.write("%s" %(str_line))
-			else:
-				#write unchanged line to file
-				fname.write("%s" %(line))
-		#close file
-		fname.close()
+		(out) ls_dataset:   	return list object
+		(in) csv_file:   		csv file path
+		'''
+		ls_dataset = []
+		with open(csv_file, 'r') as csvFile:
+			csv_reader = csv.reader(csvFile, delimiter=',')
+			for row in csv_reader:
+				## skip empty line
+				if(len(row)!=0):
+					ls_dataset.append(row)
+		return ls_dataset
 	
 	@staticmethod
 	def List_save(filepath, list_data):

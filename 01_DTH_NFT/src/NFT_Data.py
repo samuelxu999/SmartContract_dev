@@ -39,7 +39,7 @@ class NFT_Data(object):
 	## get address from json file, helper function
 	@staticmethod
 	def getAddress(node_name):
-		address_json = json.load(open('./addr_list.json'))
+		address_json = json.load(open('./config/addr_list.json'))
 		return address_json[node_name]
 
 	## mint a token

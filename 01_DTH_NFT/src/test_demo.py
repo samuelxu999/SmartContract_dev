@@ -14,7 +14,9 @@ import argparse
 import sys
 import os
 
-from utilities import DatetimeUtil, TypesUtil, FileUtil
+from cryptolib.crypto_sym import Crypto_SYM
+from utils.utilities import DatetimeUtil, TypesUtil, FileUtil
+from utils.Swarm_RPC import Swarm_RPC
 from NFT_CapAC import NFT_CapAC
 from NFT_Data import NFT_Data
 
@@ -149,6 +151,90 @@ def dummy_data(op_status):
 
 	return parameters
 
+def test_sym(args):
+	for i in range(args.tx_round):
+		logger.info("Test run:{}".format(i+1))
+		## set data file path
+		data_name = "./data/20220818154623.csv"
+		_data=FileUtil.csv_read(data_name)
+		ls_Gyro = []
+		ls_ts = []
+		for line_data in _data:
+			row = line_data[0].split(" ")
+			if('Gyro' in row):
+				ls_Gyro.append(row)
+			else:
+				ls_ts.append(row)
+
+		# print(ls_Gyro)
+		# print(ls_ts)
+
+		# str_data = str(ls_Gyro)
+		str_data = str(ls_ts)
+
+		salt_file = 'sym_salt'
+		## 1) generate salt
+		Crypto_SYM.generate_salt(salt_file)
+		logger.info('Generate salt and saved to {}.\n'.format(salt_file))
+
+		## 2) reload salt
+		random_salt = Crypto_SYM.reload_salt(salt_file)
+		logger.info('Reload salt from {}.\n'.format(salt_file))
+
+		ls_time_exec = []
+
+		## 3) encrypt message
+		start_time=time.time()
+		toekn = Crypto_SYM.encrypt(random_salt, 'samuelxu999', str_data)
+		ls_time_exec.append(format( (time.time()-start_time)*1000, '.3f' )) 
+		logger.info('Encryped data: {}.\n'.format(data_name))
+
+		## 4) decrypt message
+		start_time=time.time()
+		dec_msg = Crypto_SYM.decrypt(random_salt, 'samuelxu999', toekn)
+		ls_time_exec.append(format( (time.time()-start_time)*1000, '.3f' )) 
+		logger.info('Decryped to original data.\n')
+
+		str_time_exec=" ".join(ls_time_exec)
+		FileUtil.save_testlog('test_results', 'test_sym.log', str_time_exec)
+
+def test_swarm(args):
+	for i in range(args.tx_round):
+		logger.info("Test run:{}".format(i+1))
+		## get swarm server node address
+		target_address = Swarm_RPC.get_service_address()
+
+		##==================== test upload file =========================
+		tx_json = {}
+		# if(args.op_status==0):
+		file_name = "swarm_file.txt"
+		file_download = "./data/download_file.txt"
+		# else:
+		# 	file_name = "mnist_cnn.pt"
+		# 	file_download = "./data/download_model.pt"
+
+		tx_json['upload_file']="./data/"+file_name
+
+		ls_time_exec = []
+		start_time=time.time()
+		## send file to swarm server
+		post_ret = Swarm_RPC.upload_file(target_address, tx_json)
+		ls_time_exec.append(format( (time.time()-start_time)*1000, '.3f' )) 
+		logger.info(post_ret)
+
+		##==================== test download file =========================
+		## get swarm hash from post_ret by upload_file
+		swarm_hash = post_ret['data']
+
+		start_time=time.time()
+		## call smarm server to retrive file
+		query_ret = Swarm_RPC.download_file(target_address, swarm_hash, file_name, file_download)
+		ls_time_exec.append(format( (time.time()-start_time)*1000, '.3f' )) 
+		logger.info(query_ret)
+
+		str_time_exec=" ".join(ls_time_exec)
+		FileUtil.save_testlog('test_results', 'test_swarm.log', str_time_exec)
+
 def define_and_get_arguments(args=sys.argv[1:]):
 	parser = argparse.ArgumentParser(
 	    description="Run test demo."
@@ -167,7 +253,9 @@ def define_and_get_arguments(args=sys.argv[1:]):
 	                    2-mint_token, \
 	                    3-burn_token, \
 	                    4-test_CapAC, \
-	                    5-test_Data")
+	                    5-test_Data, \
+	                    10-test_sym, \
+	                    11-test_swarm")
 
 	parser.add_argument("--op_status", type=int, default=0, 
 	                    help="operation status: based on app")
@@ -255,6 +343,10 @@ if __name__ == "__main__":
 			ls_time_exec.append( format( time.time()-start_time, '.3f') )
 			str_time_exec=" ".join(ls_time_exec)
 			FileUtil.save_testlog('test_results', 'update_DataAC.log', str_time_exec)
+	elif(args.test_func==10):
+		test_sym(args)
+	elif(args.test_func==11):
+		test_swarm(args)
 	else:
 		balance = token_capAC.getBalance(base_account)
 		print("coinbase account: {}   balance: {}".format(base_account, balance))
