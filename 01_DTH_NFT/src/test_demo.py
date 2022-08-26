@@ -8,7 +8,7 @@ Created on August.25, 2022
 @TaskDescription: This module provide test cases for demo and performance analysis.
 '''
 
-import time
+import datetime, time
 import logging
 import argparse
 import sys
@@ -81,6 +81,31 @@ def burn_token(tokenId, op_status):
 	else:
 		print('Token {} is not existed'.format(tokenId))
 
+def test_CapAC(tokenId, op_status, ls_args):
+	_owner = token_capAC.ownerToken(tokenId)
+	if(_owner==None):
+		print('Token {} is not existed'.format(tokenId))
+		return
+
+	if(op_status==1):
+		print('Token {} CapAC_authorization.'.format(tokenId))
+		receipt = token_capAC.CapAC_authorization(tokenId, ls_args[2])
+	else:
+		print('Token {} CapAC_expireddate.'.format(tokenId))
+		receipt = token_capAC.CapAC_expireddate(tokenId, ls_args[0], ls_args[1])
+
+def test_Data(tokenId, op_status, ls_args):
+	_owner = token_dataAC.ownerToken(tokenId)
+	if(_owner==None):
+		print('Token {} is not existed'.format(tokenId))
+		return
+
+	if(op_status==1):
+		print('Token {} DataAC_authorization.'.format(tokenId))
+		receipt = token_dataAC.DataAC_authorization(tokenId, ls_args[2])
+	else:
+		print('Token {} DataAC_setup.'.format(tokenId))
+		receipt = token_dataAC.DataAC_setup(tokenId, ls_args[0], ls_args[1])
 
 def define_and_get_arguments(args=sys.argv[1:]):
 	parser = argparse.ArgumentParser(
@@ -135,6 +160,42 @@ if __name__ == "__main__":
 		mint_token(args.id, args.value, args.op_status)
 	elif(args.test_func==3):
 		burn_token(args.id, args.op_status)
+	elif(args.test_func==4):
+		## set issue date and expired date
+		nowtime = datetime.datetime.now()
+		issue_time = DatetimeUtil.datetime_timestamp(nowtime)
+		duration = DatetimeUtil.datetime_duration(0, 1, 0, 0)
+		expire_time = DatetimeUtil.datetime_timestamp(nowtime + duration)
+
+		## set ac right as json
+		json_ac={}
+		json_ac['resource']="/camera/api/viewer/"
+		json_ac['action']="GET"
+		json_ac['conditions']={}
+		json_ac['conditions']['start']="9:12:32"
+		json_ac['conditions']['end']="14:12:32"
+		ac_rights=TypesUtil.json_to_string(json_ac)
+
+		ls_parameters = [issue_time, expire_time, ac_rights]
+
+		test_CapAC(args.id, args.op_status, ls_parameters)
+	elif(args.test_func==5):
+		## get ref_address
+		ref_address = TypesUtil.string_to_hex(os.urandom(64)) 
+
+		## get hash value of data
+		data_mac = TypesUtil.string_to_hex(os.urandom(128))
+
+		## set ac right as json
+		json_ac={}
+		json_ac['action']="READ"
+		json_ac['conditions']={}
+		json_ac['conditions']['expired']="2022-09-10"
+		ac_rights=TypesUtil.json_to_string(json_ac)
+
+		ls_parameters = [ref_address, data_mac, ac_rights]
+
+		test_Data(args.id, args.op_status, ls_parameters)
 	else:
 		balance = token_capAC.getBalance(base_account)
 		print("coinbase account: {}   balance: {}".format(base_account, balance))
