@@ -13,8 +13,6 @@ import json, datetime, time
 import sys
 import argparse
 
-from utilities import DatetimeUtil, TypesUtil
-
 class NFT_CapAC(object):
 	def __init__(self, http_provider, contract_addr, contract_config):
 		# configuration initialization
@@ -180,11 +178,8 @@ if __name__ == "__main__":
 		tokenId=NFT_CapAC.getAddress(args.id)
 
 		#set issue date and expired date
-		nowtime = datetime.datetime.now()
-		#calculate issue_time and expire_time
-		issue_time = DatetimeUtil.datetime_timestamp(nowtime)
-		duration = DatetimeUtil.datetime_duration(0, 1, 0, 0)
-		expire_time = DatetimeUtil.datetime_timestamp(nowtime + duration)
+		issue_time = 1661530882369
+		expire_time = 1661617282369
 
 		receipt = myToken.CapAC_expireddate(tokenId, issue_time, expire_time)
 		if(receipt!=None):
