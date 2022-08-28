@@ -13,6 +13,7 @@ import logging
 import argparse
 import sys
 import os
+import threading
 
 from cryptolib.crypto_sym import Crypto_SYM
 from utils.utilities import DatetimeUtil, TypesUtil, FileUtil
@@ -40,6 +41,58 @@ token_dataAC = NFT_Data(httpProvider, contractAddr, contractConfig)
 accounts = token_dataAC.getAccounts()
 base_account = accounts[0]
 
+## ---------------------- Internal function and class -----------------------------
+class queryTxsThread(threading.Thread):
+	'''
+	Threading class to handle multiple txs threads pool
+	'''
+	def __init__(self, argv):
+		threading.Thread.__init__(self)
+		self.argv = argv
+
+	#The run() method is the entry point for a thread.
+	def run(self):
+		## set parameters based on argv
+		op_status = self.argv[0]
+		_token = self.argv[1]
+		_id = self.argv[2]
+
+		_owner = _token.ownerToken(_id)
+		if(op_status==1):
+			_data=_token.get_DataAC(_id)
+			logger.info("Token_id:{},   owner:{}\nDataAC  id:{}  ref_address:{}   data_mac:{}   access_rights:{}".format(_id, _owner, 
+					_data[0], _data[1], _data[2], _data[3]))
+		else:
+			_data=_token.query_CapAC(_id)
+			logger.info("Token_id:{}   owner:{}\nCapAC:{}".format(_id, _owner, _data))
+
+def query_txs(args):
+	tokenId = args.id
+	op_status = args.op_status
+	thread_num = args.tx_thread
+	## Create thread pool
+	threads_pool = []
+
+	## 1) build tx_thread for each task
+	for idx in range(thread_num):
+		## Create new threads for tx
+		if(op_status==1):
+			p_thread = queryTxsThread( [op_status, token_dataAC, tokenId] )
+		else:
+			p_thread = queryTxsThread( [op_status, token_capAC, tokenId] )
+
+		## append to threads pool
+		threads_pool.append(p_thread)
+
+		## The start() method starts a thread by calling the run method.
+		p_thread.start()
+
+	## 2) The join() waits for all threads to terminate.
+	for p_thread in threads_pool:
+		p_thread.join()
+
+	logger.info('launch query_txs, number:{}'.format(thread_num))
+
 def query_token(tokenId, op_status):
 	if(op_status==1):
 		base_URI = token_dataAC.get_baseURI()		
@@ -54,7 +107,7 @@ def query_token(tokenId, op_status):
 	else:
 		token_value = token_capAC.query_CapAC(tokenId)
 		owner = token_capAC.ownerToken(tokenId)
-		print("Token_id:{}   owner:{}  CapAC:{}".format(tokenId, owner, token_value))
+		print("Token_id:{}   owner:{}\nCapAC:{}".format(tokenId, owner, token_value))
 
 def mint_token(tokenId, owner, op_status):
 	_account = NFT_CapAC.getAddress(owner)
@@ -264,8 +317,8 @@ def define_and_get_arguments(args=sys.argv[1:]):
 	parser.add_argument("--op_status", type=int, default=0, 
 	                    help="operation status: based on app")
 
-	parser.add_argument("--query_tx", type=int, default=0, 
-	                    help="Query tx or commit tx: 0-Query, 1-Commit")
+	parser.add_argument("--tx_thread", type=int, default=1, 
+						help="Transaction-threads count.")
 
 	parser.add_argument("--seed", type=int, default=1, 
 						help="seed used for randomization")
@@ -367,6 +420,20 @@ if __name__ == "__main__":
 				ls_time_exec.append( format( time.time()-start_time, '.3f') )
 				str_time_exec=" ".join(ls_time_exec)
 				FileUtil.save_testlog('test_results', 'update_DataAC.log', str_time_exec)
+			time.sleep(args.wait_interval)
+	elif(args.test_func==6):
+		for i in range(args.tx_round):
+			logger.info("Test run:{}".format(i+1))
+			ls_time_exec = []
+			start_time=time.time()
+			query_txs(args)
+			logger.info("exec_time: {} ms".format( format( (time.time()-start_time)*1000, '.3f')  ))
+			ls_time_exec.append(format( (time.time()-start_time)*1000, '.3f' ))
+			str_time_exec=" ".join(ls_time_exec)
+			if(args.op_status==1):
+				FileUtil.save_testlog('test_results', 'query_txs_tokenData.log', str_time_exec)
+			else:
+				FileUtil.save_testlog('test_results', 'query_txs_tokenCapAC.log', str_time_exec)
 			time.sleep(args.wait_interval)
 	elif(args.test_func==10):
 		test_sym(args)
