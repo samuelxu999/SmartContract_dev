@@ -153,8 +153,8 @@ if __name__ == "__main__":
 		ls_time_exec = []
 		start_time=time.time()
 		query_txs(args)
-		logger.info("exec_time: {} ms".format( format( (time.time()-start_time)*1000, '.3f')  ))
-		ls_time_exec.append(format( (time.time()-start_time)*1000, '.3f' ))
+		logger.info("exec_time: {} sec".format( format( (time.time()-start_time), '.3f')  ))
+		ls_time_exec.append(format( (time.time()-start_time), '.3f' ))
 		str_time_exec=" ".join(ls_time_exec)
 		if(args.op_status==1):
 			FileUtil.save_testlog('test_results', 'getDataAC_client.log', str_time_exec)
