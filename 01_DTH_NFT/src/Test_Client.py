@@ -150,7 +150,16 @@ if __name__ == "__main__":
 		ret_msg=queryDataAC(args.target_address, args.id)
 		logger.info(ret_msg)
 	elif(args.test_func==3):
+		ls_time_exec = []
+		start_time=time.time()
 		query_txs(args)
+		logger.info("exec_time: {} ms".format( format( (time.time()-start_time)*1000, '.3f')  ))
+		ls_time_exec.append(format( (time.time()-start_time)*1000, '.3f' ))
+		str_time_exec=" ".join(ls_time_exec)
+		if(args.op_status==1):
+			FileUtil.save_testlog('test_results', 'getDataAC_client.log', str_time_exec)
+		else:
+			FileUtil.save_testlog('test_results', 'getCapAC_client.log', str_time_exec)
 	else:
 	    ret_msg=queryTokenInfo(args.target_address)
 	    logger.info(ret_msg)
