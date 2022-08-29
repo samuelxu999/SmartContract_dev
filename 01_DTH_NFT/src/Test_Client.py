@@ -36,7 +36,7 @@ class queryTxsThread(threading.Thread):
 		_id = self.argv[2]
 
 		if(op_status==1):
-			ret_msg=queryCapAC(_address, _id)
+			ret_msg=queryDataAC(_address, _id)
 			logger.info(ret_msg)
 		else:
 			ret_msg=queryCapAC(_address, _id)
