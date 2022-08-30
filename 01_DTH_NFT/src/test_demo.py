@@ -20,79 +20,32 @@ from utils.utilities import DatetimeUtil, TypesUtil, FileUtil
 from utils.Swarm_RPC import Swarm_RPC
 from NFT_CapAC import NFT_CapAC
 from NFT_Data import NFT_Data
+from NFT_Tracker import NFT_Tracker
 
 logger = logging.getLogger(__name__)
 
 ## ------------------- global variable ----------------------------
 httpProvider = NFT_CapAC.getAddress('HttpProvider')
 
+## new NFT_CapAC instance
 contractAddr = NFT_CapAC.getAddress('NFT_CapAC')
 contractConfig = '../build/contracts/NFT_CapAC.json'
-
-## new NFT_CapAC instance
 token_capAC = NFT_CapAC(httpProvider, contractAddr, contractConfig)
 
+## new NFT_Data instance
 contractAddr = NFT_CapAC.getAddress('NFT_Data')
 contractConfig = '../build/contracts/NFT_Data.json'
-
-## new NFT_Data instance
 token_dataAC = NFT_Data(httpProvider, contractAddr, contractConfig)
+
+## new NFT_Tracker instance
+contractAddr = NFT_Tracker.getAddress('NFT_Tracker')
+contractConfig = '../build/contracts/NFT_Tracker.json'
+token_dataTracker = NFT_Tracker(httpProvider, contractAddr, contractConfig)
 
 accounts = token_dataAC.getAccounts()
 base_account = accounts[0]
 
 ## ---------------------- Internal function and class -----------------------------
-class queryTxsThread(threading.Thread):
-	'''
-	Threading class to handle multiple txs threads pool
-	'''
-	def __init__(self, argv):
-		threading.Thread.__init__(self)
-		self.argv = argv
-
-	#The run() method is the entry point for a thread.
-	def run(self):
-		## set parameters based on argv
-		op_status = self.argv[0]
-		_token = self.argv[1]
-		_id = self.argv[2]
-
-		_owner = _token.ownerToken(_id)
-		if(op_status==1):
-			_data=_token.get_DataAC(_id)
-			logger.info("Token_id:{},   owner:{}\nDataAC  id:{}  ref_address:{}   data_mac:{}   access_rights:{}".format(_id, _owner, 
-					_data[0], _data[1], _data[2], _data[3]))
-		else:
-			_data=_token.query_CapAC(_id)
-			logger.info("Token_id:{}   owner:{}\nCapAC:{}".format(_id, _owner, _data))
-
-def query_txs(args):
-	tokenId = args.id
-	op_status = args.op_status
-	thread_num = args.tx_thread
-	## Create thread pool
-	threads_pool = []
-
-	## 1) build tx_thread for each task
-	for idx in range(thread_num):
-		## Create new threads for tx
-		if(op_status==1):
-			p_thread = queryTxsThread( [op_status, token_dataAC, tokenId] )
-		else:
-			p_thread = queryTxsThread( [op_status, token_capAC, tokenId] )
-
-		## append to threads pool
-		threads_pool.append(p_thread)
-
-		## The start() method starts a thread by calling the run method.
-		p_thread.start()
-
-	## 2) The join() waits for all threads to terminate.
-	for p_thread in threads_pool:
-		p_thread.join()
-
-	logger.info('launch query_txs, number:{}'.format(thread_num))
-
 def query_token(tokenId, op_status):
 	if(op_status==1):
 		base_URI = token_dataAC.get_baseURI()		
@@ -104,6 +57,17 @@ def query_token(tokenId, op_status):
 			print("Token_id:{}  base_URI:{}".format(tokenId, base_URI))
 		data_ac = token_dataAC.get_DataAC(tokenId)
 		print("DataAC,  id:{}  ref_address:{}   data_mac:{}   access_rights:{}".format(data_ac[0], data_ac[1], data_ac[2], data_ac[3]))
+	elif(op_status==2):
+		owner = token_dataTracker.ownerToken(tokenId)
+		if(owner!=None):	
+			token_URI = token_dataTracker.get_tokenURI(tokenId)
+		else:
+			token_URI = ""
+		tracker_length = token_dataTracker.get_totalTracker(tokenId)
+		print("Token_id:{}  owner: {}   token_URI:{}   tracker num: {}".format(tokenId, owner, token_URI, tracker_length))
+		for idx in range(tracker_length):
+			tracker_data = token_dataTracker.get_DataTracker(tokenId, idx)
+			print("sender:{}   receiver:{}".format(tracker_data[0], tracker_data[1]))
 	else:
 		token_value = token_capAC.query_CapAC(tokenId)
 		owner = token_capAC.ownerToken(tokenId)
@@ -114,6 +78,9 @@ def mint_token(tokenId, owner, op_status):
 	if(op_status==1):
 		receipt = token_dataAC.mint_Data(tokenId, _account)
 		_owner = token_dataAC.ownerToken(tokenId)
+	elif(op_status==2):
+		receipt = token_dataTracker.mint_Tracker(tokenId, _account)
+		_owner = token_dataTracker.ownerToken(tokenId)
 	else:
 		receipt = token_capAC.mint_CapAC(tokenId, _account)
 		_owner = token_capAC.ownerToken(tokenId)
@@ -128,6 +95,9 @@ def burn_token(tokenId, op_status):
 	if(op_status==1):
 		_owner = token_dataAC.ownerToken(tokenId)
 		receipt = token_dataAC.burn_Data(tokenId)
+	if(op_status==2):
+		_owner = token_dataTracker.ownerToken(tokenId)
+		receipt = token_dataTracker.burn_Tracker(tokenId)
 	else:
 		_owner = token_capAC.ownerToken(tokenId)
 		receipt = token_capAC.burn_CapAC(tokenId)
@@ -165,6 +135,23 @@ def test_Data(tokenId, op_status, ls_args):
 	else:
 		print('Token {} DataAC_setup.'.format(tokenId))
 		receipt = token_dataAC.DataAC_setup(tokenId, ls_args[0], ls_args[1])
+
+	return receipt
+
+def test_Tracker(tokenId, op_status, ls_args):
+	_owner = token_dataTracker.ownerToken(tokenId)
+	if(_owner==None):
+		print('Token {} is not existed'.format(tokenId))
+		return
+
+	if(op_status==1):
+		print('Token {} transfer.'.format(tokenId))
+		sender = NFT_Tracker.getAddress(ls_args[0])
+		receiver = NFT_Tracker.getAddress(ls_args[1])
+		receipt = token_dataTracker.transfer_DataTracker(tokenId, sender, receiver)
+	else:
+		print('Token {} set_tokenURI.'.format(tokenId))
+		receipt = token_dataTracker.set_tokenURI(tokenId, ls_args[0])
 
 	return receipt
 
@@ -311,6 +298,7 @@ def define_and_get_arguments(args=sys.argv[1:]):
 	                    3-burn_token, \
 	                    4-test_CapAC, \
 	                    5-test_Data, \
+	                    6-test_Tracker, \
 	                    10-test_sym, \
 	                    11-test_swarm")
 
@@ -352,6 +340,8 @@ if __name__ == "__main__":
 			str_time_exec=" ".join(ls_time_exec)
 			if(args.op_status==1):
 				FileUtil.save_testlog('test_results', 'query_tokenData.log', str_time_exec)
+			elif(args.op_status==2):
+				FileUtil.save_testlog('test_results', 'query_tokenTracker.log', str_time_exec)
 			else:
 				FileUtil.save_testlog('test_results', 'query_tokenCapAC.log', str_time_exec)
 			time.sleep(args.wait_interval)
@@ -368,6 +358,8 @@ if __name__ == "__main__":
 				str_time_exec=" ".join(ls_time_exec)
 				if(args.op_status==1):
 					FileUtil.save_testlog('test_results', 'mint_tokenData.log', str_time_exec)
+				elif(args.op_status==2):
+					FileUtil.save_testlog('test_results', 'mint_tokenTracker.log', str_time_exec)
 				else:
 					FileUtil.save_testlog('test_results', 'mint_tokenCapAC.log', str_time_exec)
 			time.sleep(args.wait_interval)
@@ -384,6 +376,8 @@ if __name__ == "__main__":
 				str_time_exec=" ".join(ls_time_exec)
 				if(args.op_status==1):
 					FileUtil.save_testlog('test_results', 'burn_tokenData.log', str_time_exec)
+				elif(args.op_status==2):
+					FileUtil.save_testlog('test_results', 'burn_tokenTracker.log', str_time_exec)
 				else:
 					FileUtil.save_testlog('test_results', 'burn_tokenCapAC.log', str_time_exec)
 			time.sleep(args.wait_interval)
@@ -424,16 +418,17 @@ if __name__ == "__main__":
 	elif(args.test_func==6):
 		for i in range(args.tx_round):
 			logger.info("Test run:{}".format(i+1))
+			token_id = args.id + i
+
 			ls_time_exec = []
 			start_time=time.time()
-			query_txs(args)
-			logger.info("exec_time: {} ms".format( format( (time.time()-start_time)*1000, '.3f')  ))
-			ls_time_exec.append(format( (time.time()-start_time)*1000, '.3f' ))
-			str_time_exec=" ".join(ls_time_exec)
-			if(args.op_status==1):
-				FileUtil.save_testlog('test_results', 'query_txs_tokenData.log', str_time_exec)
-			else:
-				FileUtil.save_testlog('test_results', 'query_txs_tokenCapAC.log', str_time_exec)
+			ls_parameters = args.value.split(',')
+			receipt = test_Tracker(token_id, args.op_status, ls_parameters)
+			if(receipt!=None):
+				logger.info("exec_time: {} sec   gasUsed: {}".format( format( time.time()-start_time, '.3f'), receipt['gasUsed'] ))
+				ls_time_exec.append( format( time.time()-start_time, '.3f') )
+				str_time_exec=" ".join(ls_time_exec)
+				FileUtil.save_testlog('test_results', 'update_DataTracker.log', str_time_exec)
 			time.sleep(args.wait_interval)
 	elif(args.test_func==10):
 		test_sym(args)
@@ -455,4 +450,11 @@ if __name__ == "__main__":
 		print("DataAC total supply: %d" %(total_supply))
 		for idx in range(total_supply):
 			ls_token.append(token_dataAC.query_tokenByIndex(idx))
+		print(ls_token)
+
+		ls_token = []
+		total_supply = token_dataTracker.query_totalSupply()
+		print("DataTracker total supply: %d" %(total_supply))
+		for idx in range(total_supply):
+			ls_token.append(token_dataTracker.query_tokenByIndex(idx))
 		print(ls_token)

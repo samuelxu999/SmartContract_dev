@@ -19,6 +19,7 @@ from flask import abort,make_response,request
 from utils.utilities import DatetimeUtil, TypesUtil, FileUtil
 from NFT_CapAC import NFT_CapAC
 from NFT_Data import NFT_Data
+from NFT_Tracker import NFT_Tracker
 
 logger = logging.getLogger(__name__)
 
@@ -27,17 +28,20 @@ app = Flask(__name__)
 ## ------------------- global variable ----------------------------
 httpProvider = NFT_CapAC.getAddress('HttpProvider')
 
+## new NFT_CapAC instance
 contractAddr = NFT_CapAC.getAddress('NFT_CapAC')
 contractConfig = '../build/contracts/NFT_CapAC.json'
-
-## new NFT_CapAC instance
 token_capAC = NFT_CapAC(httpProvider, contractAddr, contractConfig)
 
+## new NFT_Data instance
 contractAddr = NFT_CapAC.getAddress('NFT_Data')
 contractConfig = '../build/contracts/NFT_Data.json'
-
-## new NFT_Data instance
 token_dataAC = NFT_Data(httpProvider, contractAddr, contractConfig)
+
+## new NFT_Tracker instance
+contractAddr = NFT_Tracker.getAddress('NFT_Tracker')
+contractConfig = '../build/contracts/NFT_Tracker.json'
+token_dataTracker = NFT_Tracker(httpProvider, contractAddr, contractConfig)
 
 accounts = token_dataAC.getAccounts()
 base_account = accounts[0]
@@ -155,6 +159,37 @@ def getDataAC():
 	json_ret['baseURI']=base_URI
 	json_ret['tokenURI']=token_URI
 	json_ret['token_value']=TypesUtil.json_to_string(token_value)
+
+	return jsonify({'result': 'Succeed', 'data': json_ret}), 201
+
+@app.route('/NFT/api/v1.0/getDataTracker', methods=['GET'])
+def getDataTracker():
+	## parse data from request.data
+	req_data=TypesUtil.bytes_to_string(request.data)
+	json_data = TypesUtil.string_to_json(req_data)
+
+	tokenId = json_data['token_id']
+	ls_tracker = []
+	start_time=time.time()
+	owner = token_dataTracker.ownerToken(tokenId)
+	if(owner!=None):
+		token_URI = token_dataTracker.get_tokenURI(tokenId)		
+	else:
+		token_URI = None
+	tracker_length = token_dataTracker.get_totalTracker(tokenId)
+	for idx in range(tracker_length):
+		tracker_data = token_dataTracker.get_DataTracker(tokenId, idx)
+		ls_tracker.append(tracker_data)	
+	exec_time=time.time()-start_time
+	FileUtil.save_testlog('test_results', 'getDataTracker.log', format(exec_time*1000, '.3f'))
+	
+	json_ret={}
+
+	json_ret['token_id']=tokenId
+	json_ret['type']='NFT-Tracker'
+	json_ret['owner']=owner
+	json_ret['tokenURI']=token_URI
+	json_ret['tracker']=ls_tracker
 
 	return jsonify({'result': 'Succeed', 'data': json_ret}), 201
 
