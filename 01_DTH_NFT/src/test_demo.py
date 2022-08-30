@@ -46,6 +46,12 @@ accounts = token_dataAC.getAccounts()
 base_account = accounts[0]
 
 ## ---------------------- Internal function and class -----------------------------
+def random_file(file_name, data_size):
+	_data = os.urandom(data_size*1024)
+	fname = open(file_name, 'w')
+	fname.write("%s" %(_data))
+	fname.close()
+
 def query_token(tokenId, op_status):
 	if(op_status==1):
 		base_URI = token_dataAC.get_baseURI()		
@@ -194,23 +200,29 @@ def dummy_data(op_status):
 def test_sym(args):
 	for i in range(args.tx_round):
 		logger.info("Test run:{}".format(i+1))
-		## set data file path
-		data_name = "./data/20220818154623.csv"
-		_data=FileUtil.csv_read(data_name)
-		ls_Gyro = []
-		ls_ts = []
-		for line_data in _data:
-			row = line_data[0].split(" ")
-			if('Gyro' in row):
-				ls_Gyro.append(row)
-			else:
-				ls_ts.append(row)
 
-		# print(ls_Gyro)
-		# print(ls_ts)
+		if(args.op_status==1):
+			## set data file path
+			data_name = "./data/20220818154623.csv"
+			_data=FileUtil.csv_read(data_name)
+			ls_Gyro = []
+			ls_ts = []
+			for line_data in _data:
+				row = line_data[0].split(" ")
+				if('Gyro' in row):
+					ls_Gyro.append(row)
+				else:
+					ls_ts.append(row)
 
-		# str_data = str(ls_Gyro)
-		str_data = str(ls_ts)
+			# print(ls_Gyro)
+			# print(ls_ts)
+
+			# str_data = str(ls_Gyro)
+			str_data = str(ls_ts)
+		else:
+			data_name = "random_bytes"
+			bytes_data = os.urandom(args.data_size*1024)
+			str_data = TypesUtil.string_to_hex(bytes_data)
 
 		salt_file = 'sym_salt'
 		## 1) generate salt
@@ -248,14 +260,21 @@ def test_swarm(args):
 
 		##==================== test upload file =========================
 		tx_json = {}
-		# if(args.op_status==0):
-		file_name = "swarm_file.txt"
+		if(args.op_status==1):
+			idx = i % 20
+			file_name = "skeleton/" + str(idx+1)+".csv"
+		elif(args.op_status==2):
+			## generate randomdata file with data_size
+			file_name = "random_file.txt"
+			file_path = "./data/"+file_name
+			random_file(file_path, args.data_size)
+		else:
+			file_name = "swarm_file.txt"
+		
 		file_download = "./data/download_file.txt"
-		# else:
-		# 	file_name = "mnist_cnn.pt"
-		# 	file_download = "./data/download_model.pt"
 
 		tx_json['upload_file']="./data/"+file_name
+
 
 		ls_time_exec = []
 		start_time=time.time()
@@ -270,7 +289,7 @@ def test_swarm(args):
 
 		start_time=time.time()
 		## call smarm server to retrive file
-		query_ret = Swarm_RPC.download_file(target_address, swarm_hash, file_name, file_download)
+		query_ret = Swarm_RPC.download_file(target_address, swarm_hash, file_name.split('/')[-1], file_download)
 		ls_time_exec.append(format( (time.time()-start_time)*1000, '.3f' )) 
 		logger.info(query_ret)
 
@@ -316,6 +335,9 @@ def define_and_get_arguments(args=sys.argv[1:]):
 	                    help="input token value (string)")
 	parser.add_argument("--message", type=str, default="", 
 						help="Test message text.")
+
+	parser.add_argument("--data_size", type=int, default=128, 
+						help="Size (KB) of randome data for test.")
 
 	args = parser.parse_args(args=args)
 	return args
