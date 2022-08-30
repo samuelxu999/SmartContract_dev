@@ -21,6 +21,16 @@ async function main() {
   await nft_data.deployed();
 
   console.log('NFT_Data deployed to:', nft_data.address);
+  
+  // We get the NFT_Tracker contract to deploy
+  name = 'NFT-Tracker';
+  symbol = 'Tracker';
+  const NFT_Tracker = await ethers.getContractFactory('NFT_Tracker');
+  console.log('Deploying NFT_Tracker...');
+  const nft_tracker = await NFT_Tracker.deploy(name,symbol);
+  await nft_tracker.deployed();
+
+  console.log('NFT_Tracker deployed to:', nft_tracker.address);
 }
 
 // We recommend this pattern to be able to use async/await everywhere
