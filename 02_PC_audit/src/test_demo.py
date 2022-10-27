@@ -15,8 +15,10 @@ import sys
 import os
 import threading
 
+from merklelib import MerkleTree, jsonify as merkle_jsonify
+
 from cryptolib.crypto_sym import Crypto_SYM
-from utils.utilities import DatetimeUtil, TypesUtil, FileUtil
+from utils.utilities import DatetimeUtil, TypesUtil, FileUtil, FuncUtil
 from utils.Swarm_RPC import Swarm_RPC
 from NFT_CapAC import NFT_CapAC
 from NFT_Data import NFT_Data
@@ -106,7 +108,7 @@ def test_CapAC(tokenId, op_status, ls_args):
 
 	return receipt
 
-def test_Data(tokenId, op_status, ls_args):
+def test_Data(tokenId, ls_args):
 	_owner = token_dataAC.ownerToken(tokenId)
 	if(_owner==None):
 		print('Token {} is not existed'.format(tokenId))
@@ -145,6 +147,27 @@ def dummy_data(op_status, value=1):
 		ac_rights=TypesUtil.json_to_string(json_ac)
 
 		parameters = [issue_time, expire_time, ac_rights]
+
+	return parameters
+
+def swarm_data(value):
+	## get hash value of data
+	data_mac = []
+	for i in range(value):
+		data_mac.append( TypesUtil.string_to_hex(os.urandom(32)) )
+
+	## build a Merkle tree from data_mac list
+	tx_HMT = MerkleTree(data_mac, FuncUtil.hashfunc_sha256)
+
+	## calculate merkle tree root hash
+	if(len(tx_HMT)==0):
+		mkt_root = 0
+	else:
+		tree_struct=merkle_jsonify(tx_HMT)
+		json_tree = TypesUtil.string_to_json(tree_struct)
+		mkt_root = json_tree['name']
+
+	parameters = [mkt_root, data_mac]
 
 	return parameters
 
@@ -268,7 +291,6 @@ def define_and_get_arguments(args=sys.argv[1:]):
 	                    3-burn_token, \
 	                    4-test_CapAC, \
 	                    5-test_Data, \
-	                    6-test_Tracker, \
 	                    10-test_sym, \
 	                    11-test_swarm")
 
@@ -370,18 +392,23 @@ if __name__ == "__main__":
 			logger.info("Test run:{}".format(i+1))
 			token_id = args.id + i
 			
-			## get dummy data for test
-			ls_parameters = dummy_data(1, int(args.value))
-
-			ls_time_exec = []
-			start_time=time.time()
-			receipt = test_Data(token_id, args.op_status, ls_parameters)
-			if(receipt!=None):
-				logger.info("exec_time: {} sec   gasUsed: {}".format( format( time.time()-start_time, '.3f'), receipt['gasUsed'] ))
-				ls_time_exec.append( format( time.time()-start_time, '.3f') )
-				str_time_exec=" ".join(ls_time_exec)
-				FileUtil.save_testlog('test_results', 'update_DataAC.log', str_time_exec)
-			time.sleep(args.wait_interval)
+			if(args.op_status==1):
+				## get swarm data for test
+				ls_parameters = swarm_data(int(args.value))
+				pass
+			else:
+				## get dummy data for test
+				ls_parameters = dummy_data(1, int(args.value))				
+			print(ls_parameters)
+			# ls_time_exec = []
+			# start_time=time.time()
+			# receipt = test_Data(token_id, ls_parameters)
+			# if(receipt!=None):
+			# 	logger.info("exec_time: {} sec   gasUsed: {}".format( format( time.time()-start_time, '.3f'), receipt['gasUsed'] ))
+			# 	ls_time_exec.append( format( time.time()-start_time, '.3f') )
+			# 	str_time_exec=" ".join(ls_time_exec)
+			# 	FileUtil.save_testlog('test_results', 'update_DataAC.log', str_time_exec)
+			# time.sleep(args.wait_interval)
 	elif(args.test_func==10):
 		test_sym(args)
 	elif(args.test_func==11):
