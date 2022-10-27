@@ -38,9 +38,6 @@ class queryTxsThread(threading.Thread):
 		if(op_status==1):
 			ret_msg=queryDataAC(_address, _id)
 			logger.info(ret_msg)
-		elif(op_status==2):
-			ret_msg=queryDataTracker(_address, _id)
-			logger.info(ret_msg)
 		else:
 			ret_msg=queryCapAC(_address, _id)
 			logger.info(ret_msg)
@@ -110,20 +107,6 @@ def queryDataAC(target_address, token_id):
 
 	return json_response
 
-def queryDataTracker(target_address, token_id):
-
-	api_url = "http://" + target_address + "/NFT/api/v1.0/getDataTracker"
-	headers = {'Content-Type' : 'application/json'}
-
-	data_json={}
-	data_json['token_id']=token_id
-
-	response = requests.get(api_url,data=json.dumps(data_json), headers=headers)
-
-	json_response = response.json()
-
-	return json_response
-
 def define_and_get_arguments(args=sys.argv[1:]):
 	parser = argparse.ArgumentParser(
 	    description="Run Test client."
@@ -166,10 +149,7 @@ if __name__ == "__main__":
 	elif(args.test_func==2): 
 		ret_msg=queryDataAC(args.target_address, args.id)
 		logger.info(ret_msg)
-	elif(args.test_func==3): 
-		ret_msg=queryDataTracker(args.target_address, args.id)
-		logger.info(ret_msg)
-	elif(args.test_func==4):
+	elif(args.test_func==3):
 		for i in range(args.tx_round):
 			logger.info("Test run:{}".format(i+1))
 			ls_time_exec = []
@@ -180,8 +160,6 @@ if __name__ == "__main__":
 			str_time_exec=" ".join(ls_time_exec)
 			if(args.op_status==1):
 				FileUtil.save_testlog('test_results', 'getDataAC_client.log', str_time_exec)
-			elif(args.op_status==2):
-				FileUtil.save_testlog('test_results', 'getDataTracker_client.log', str_time_exec)
 			else:
 				FileUtil.save_testlog('test_results', 'getCapAC_client.log', str_time_exec)
 			time.sleep(args.wait_interval)

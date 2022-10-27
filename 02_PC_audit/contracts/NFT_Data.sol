@@ -137,6 +137,14 @@ contract NFT_Data is ERC721, ERC721Enumerable, ERC721URIStorage, Ownable {
 
         _dataAC[tokenId].id += 1;
         _dataAC[tokenId].mkt_root = mkt_root;
+
+        // reset total_mac and data_mac
+        if(_dataAC[tokenId].total_mac!=0){
+            delete _dataAC[tokenId].data_mac;
+            _dataAC[tokenId].total_mac=0;
+        }
+
+        // for each item to add data_mac
         for(uint i =0; i<data_mac.length; i++){
             _dataAC[tokenId].data_mac.push(data_mac[i]);
             _dataAC[tokenId].total_mac+=1;
