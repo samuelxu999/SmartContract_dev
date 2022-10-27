@@ -25,8 +25,8 @@ contract('NFT_Data', function ([ owner, other ]) {
 	const baseURI = 'https://api.example.com/v1/';
 	const newBaseURI = 'https://api.example.com/v2/';
 	const tokenURI = 'test_sample';
-	const ref_address = '0x9374E09e81d54c190Cd94266EaaD0F2A2b060AF6';
-	const data_mac = '0x438d538a30e577832db65a1de046906f0f3e448308cf0834ac153c8dee728293';
+	const mkt_root = '0x9374E09e81d54c190Cd94266EaaD0F2A2b060AF6';
+	const data_mac = ['0x438d538a30e','0x577832db65a1de', '0x906f0f3e448308','0xcf0834ee728293'];
 
 	beforeEach(async function () {
 		this.token = await NFT_Data.new(name, symbol);
@@ -101,22 +101,31 @@ contract('NFT_Data', function ([ owner, other ]) {
 		});
 
 		describe('setDataAC', function () {
-		  context('when the given address owns DataAC', function () {
-	          it('verify ref_address and data_mac', async function () {
-	          	await this.token.setDataAC(firstTokenId, ref_address, data_mac, { from: owner });
-	          	this.data_ac = await this.token.query_DataAC(firstTokenId);
-	          	expect(this.data_ac[1]).to.be.bignumber.equal(ref_address);
-	          	expect(this.data_ac[2]).to.be.bignumber.equal(data_mac);
-	          });
-		  });
-		  context('when the given address does not own DataAC', function () {
-	          it('reverts', async function () {
-	            await expectRevert(
-	              this.token.setDataAC(firstTokenId, ref_address, data_mac, { from: other }),
-	              "NFT_DataAC: setDataAC from incorrect owner",
-	            );
-	          });
-		  });
+			context('when the given address owns DataAC', function () {
+				beforeEach(async function () {
+				  	await this.token.setDataAC(firstTokenId, mkt_root, data_mac, { from: owner });
+				  	this.data_ac = await this.token.query_DataAC(firstTokenId);
+				});
+				it('verify mkt_root', async function () {
+					expect(this.data_ac[1]).to.be.bignumber.equal(mkt_root);
+				});
+				it('verify total data_mac', async function () {
+					expect(this.data_ac[3]).to.equal(data_mac.length);
+				});
+				it('verify data_mac', async function () {
+					for(i=0; i<data_mac.length;i++){
+						expect(this.data_ac[2][i]).to.be.bignumber.equal(data_mac[i]);
+					}
+				});
+			});
+			context('when the given address does not own DataAC', function () {
+				it('reverts', async function () {
+					await expectRevert(
+					  this.token.setDataAC(firstTokenId, mkt_root, data_mac, { from: other }),
+					  "NFT_DataAC: setDataAC from incorrect owner",
+					);
+				});
+			});
 		});
 	});
 

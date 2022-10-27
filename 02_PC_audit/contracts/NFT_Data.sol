@@ -19,8 +19,9 @@ contract NFT_Data is ERC721, ERC721Enumerable, ERC721URIStorage, Ownable {
     */
     struct DataAC {
         uint id;                // incremental id
-        string ref_address;   	// reference address (hash string) of data
-        string data_mac;   		// authentor for data integrity
+        string mkt_root;   	    // reference address (hash string) of data
+        string[] data_mac;   	// authentor for data integrity
+        uint total_mac;         // count total number of data_mac
     }
 
     // Mapping from token ID to DataAC
@@ -109,17 +110,19 @@ contract NFT_Data is ERC721, ERC721Enumerable, ERC721URIStorage, Ownable {
     // DataAC functions
     function query_DataAC(uint256 tokenId) public view returns (uint, 
                                                         string memory, 
-                                                        string memory) {
+                                                        string[] memory,
+                                                        uint) {
         return(_dataAC[tokenId].id, 
-            _dataAC[tokenId].ref_address,
-            _dataAC[tokenId].data_mac
+            _dataAC[tokenId].mkt_root,
+            _dataAC[tokenId].data_mac,
+            _dataAC[tokenId].total_mac
             );      
     }
 
     function _mintDataAC(uint256 tokenId) private {
         _dataAC[tokenId].id = 1;
-        _dataAC[tokenId].ref_address = '0x00';
-        _dataAC[tokenId].data_mac = '0x00';
+        _dataAC[tokenId].mkt_root = '0x00';
+        _dataAC[tokenId].total_mac = 0;
     }
 
     function _burnDataAC(uint256 tokenId) private {
@@ -128,13 +131,16 @@ contract NFT_Data is ERC721, ERC721Enumerable, ERC721URIStorage, Ownable {
 
     // Set data information for a DataAC
     function setDataAC(uint256 tokenId, 
-                                    string memory ref_address, 
-                                    string memory data_mac) public {
+                                    string memory mkt_root, 
+                                    string[] memory data_mac) public {
         require(ownerOf(tokenId) == msg.sender, "NFT_DataAC: setDataAC from incorrect owner");
 
         _dataAC[tokenId].id += 1;
-        _dataAC[tokenId].ref_address = ref_address;
-        _dataAC[tokenId].data_mac = data_mac;
+        _dataAC[tokenId].mkt_root = mkt_root;
+        for(uint i =0; i<data_mac.length; i++){
+            _dataAC[tokenId].data_mac.push(data_mac[i]);
+            _dataAC[tokenId].total_mac+=1;
+        }
 
         emit OnDataAC_Update(tokenId, _dataAC[tokenId].id);
 

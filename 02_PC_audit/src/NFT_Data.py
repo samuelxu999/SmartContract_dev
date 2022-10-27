@@ -77,19 +77,10 @@ class NFT_Data(object):
 			return None
 
 	## DataAC_setup
-	def DataAC_setup(self, tokenId, ref_address, data_mac):
+	def DataAC_setup(self, tokenId, mkt_root, data_mac):
 		token_existed = self.contract.functions.exists(int(tokenId)).call({'from': self.web3.eth.coinbase})
 		if(token_existed):
-			tx_hash = self.contract.functions.setDataAC(int(tokenId), ref_address, data_mac).transact({'from': self.web3.eth.coinbase})
-			return self.web3.eth.wait_for_transaction_receipt(tx_hash)
-		else:
-			return None
-
-	## DataAC_authorization
-	def DataAC_authorization(self, tokenId, ac_right):
-		token_existed = self.contract.functions.exists(int(tokenId)).call({'from': self.web3.eth.coinbase})
-		if(token_existed):
-			tx_hash = self.contract.functions.setDataAC_authorization(int(tokenId), ac_right).transact({'from': self.web3.eth.coinbase})
+			tx_hash = self.contract.functions.setDataAC(int(tokenId), mkt_root, data_mac).transact({'from': self.web3.eth.coinbase})
 			return self.web3.eth.wait_for_transaction_receipt(tx_hash)
 		else:
 			return None
@@ -130,8 +121,7 @@ def define_and_get_arguments(args=sys.argv[1:]):
                         3-burn_Data, \
                         4-set_baseURI, \
                         5-set_tokenURI, \
-                        6-DataAC_setup, \
-                        7-DataAC_authorization")
+                        6-DataAC_setup")
 
     parser.add_argument("--op_status", type=int, default="0", 
                         help="input sub operation")
@@ -169,7 +159,7 @@ if __name__ == "__main__":
 		else:
 			print("Token_id:{}  base_URI:{}".format(tokenId, base_URI))
 		data_ac = myToken.get_DataAC(tokenId)
-		print("DataAC,  id:{}  ref_address:{}   data_mac:{}   access_rights:{}".format(data_ac[0], data_ac[1], data_ac[2], data_ac[3]))
+		print("DataAC,  id:{}  mkt_root:{}   data_mac:{}   total_mac:{}".format(data_ac[0], data_ac[1], data_ac[2], data_ac[3]))
 
 	elif(args.test_op==2):
 		tokenId=NFT_Data.getAddress(args.id)
@@ -219,21 +209,14 @@ if __name__ == "__main__":
 			print('Token {} is not existed'.format(tokenId))
 	elif(args.test_op==6):
 		tokenId=NFT_Data.getAddress(args.id)
-		[ref_address, data_mac] = args.value.split(',')
-		receipt = myToken.DataAC_setup(tokenId, ref_address, data_mac)
+		[mkt_root, str_data_mac] = args.value.split(',')
+		data_mac = str_data_mac.split(':')
+		receipt = myToken.DataAC_setup(tokenId, mkt_root, data_mac)
 		if(receipt!=None):
 			print('Token {} setDataAC'.format(tokenId))
 			print(receipt)
 		else:
-			print('Token {} is not existed'.format(tokenId))
-	elif(args.test_op==7):
-		tokenId=NFT_Data.getAddress(args.id)
-		receipt = myToken.DataAC_authorization(tokenId, args.value)
-		if(receipt!=None):
-			print('Token {} setDataAC_authorization'.format(tokenId))
-			print(receipt)
-		else:
-			print('Token {} is not existed'.format(tokenId))		
+			print('Token {} is not existed'.format(tokenId))	
 	else:
 		balance = myToken.getBalance(accounts[0])
 		total_supply = myToken.query_totalSupply()
