@@ -59,10 +59,63 @@ def query_token(tokenId, op_status):
 			print("Token_id:{}  base_URI:{}".format(tokenId, base_URI))
 		data_ac = token_dataAC.get_DataAC(tokenId)
 		print("DataAC,  id:{}  mkt_root:{}   data_mac:{}   total_mac:{}".format(data_ac[0], data_ac[1], data_ac[2], data_ac[3]))
+		return data_ac
 	else:
 		token_value = token_capAC.query_CapAC(tokenId)
 		owner = token_capAC.ownerToken(tokenId)
 		print("Token_id:{}   owner:{}\nCapAC:{}".format(tokenId, owner, token_value))
+		return token_value
+
+def audit_data(token_id):
+	ls_time_exec = []
+	start_time=time.time()
+
+	## query DataAC
+	data_ac=query_token(args.id, 1)
+
+	ls_time_exec.append(format( (time.time()-start_time)*1000, '.3f' ))
+
+	start_time=time.time()
+	## build a Merkle tree from data_mac list
+	mkt_root = data_ac[1]
+	data_mac = data_ac[2]
+	total_mac = data_ac[3]
+
+	if(len(data_mac)!=total_mac):
+		print("number of data_mac is not the same as total_mac!")
+		return False
+
+	## rebuild merkle tree
+	tx_HMT = MerkleTree(data_mac, FuncUtil.hashfunc_sha256)
+	tree_struct=merkle_jsonify(tx_HMT)
+	json_tree = TypesUtil.string_to_json(tree_struct)
+	re_mkt_root = json_tree['name']
+
+	if(re_mkt_root!=mkt_root):
+		print("verify merkle tree root fail!")
+		return False
+
+	ls_time_exec.append(format( (time.time()-start_time)*1000, '.3f' ))
+
+	start_time=time.time()
+	for swarm_hash in data_mac:
+		## random select a site from address pool
+		target_address = Swarm_RPC.get_service_address()
+		ret_data = Swarm_RPC.download_data(target_address,swarm_hash)['data']
+
+		if(ret_data==''):
+			print("verify data_config fail!")
+			return False
+		# else:
+		# 	print(ret_data)
+
+	ls_time_exec.append(format( (time.time()-start_time)*1000, '.3f' ))
+	str_time_exec=" ".join(ls_time_exec)
+
+	FileUtil.save_testlog('test_results', 'verify_tokenData.log', str_time_exec)
+
+	return True	
+
 
 def mint_token(tokenId, owner, op_status):
 	_account = NFT_CapAC.getAddress(owner)
@@ -154,7 +207,30 @@ def swarm_data(value):
 	## get hash value of data
 	data_mac = []
 	for i in range(value):
-		data_mac.append( TypesUtil.string_to_hex(os.urandom(32)) )
+
+		## random select a site from address pool
+		target_address = Swarm_RPC.get_service_address()
+
+		## build json_data
+		json_data = {}
+
+		data_config = {}
+		data_config['server_address']=target_address
+		data_config['data_src']='pc_dummy'
+		json_data['data_config']=data_config
+
+		json_data['audit_proof']=TypesUtil.string_to_hex(os.urandom(16))
+
+		## covert to string tx
+		tx_data = TypesUtil.json_to_string(json_data) 
+		tx_json = {}
+		tx_json['data']=tx_data
+
+		## upload to swarm sute
+		smarm_hash = Swarm_RPC.upload_data(target_address, tx_json)['data']
+		data_mac.append(smarm_hash)
+
+		# data_mac.append( TypesUtil.string_to_hex(os.urandom(32)) )
 
 	## build a Merkle tree from data_mac list
 	tx_HMT = MerkleTree(data_mac, FuncUtil.hashfunc_sha256)
@@ -291,6 +367,7 @@ def define_and_get_arguments(args=sys.argv[1:]):
 	                    3-burn_token, \
 	                    4-test_CapAC, \
 	                    5-test_Data, \
+	                    6-audit_data, \
 	                    10-test_sym, \
 	                    11-test_swarm")
 
@@ -399,16 +476,31 @@ if __name__ == "__main__":
 			else:
 				## get dummy data for test
 				ls_parameters = dummy_data(1, int(args.value))				
-			print(ls_parameters)
+			# print(ls_parameters)
+			ls_time_exec = []
+			start_time=time.time()
+			receipt = test_Data(token_id, ls_parameters)
+			if(receipt!=None):
+				logger.info("exec_time: {} sec   gasUsed: {}".format( format( time.time()-start_time, '.3f'), receipt['gasUsed'] ))
+				ls_time_exec.append( format( time.time()-start_time, '.3f') )
+				str_time_exec=" ".join(ls_time_exec)
+				FileUtil.save_testlog('test_results', 'update_DataAC.log', str_time_exec)
+			time.sleep(args.wait_interval)
+	elif(args.test_func==6):
+		for i in range(args.tx_round):			
+			logger.info("Test run:{}".format(i+1))
+
+			# ## execute verify data
 			# ls_time_exec = []
 			# start_time=time.time()
-			# receipt = test_Data(token_id, ls_parameters)
-			# if(receipt!=None):
-			# 	logger.info("exec_time: {} sec   gasUsed: {}".format( format( time.time()-start_time, '.3f'), receipt['gasUsed'] ))
-			# 	ls_time_exec.append( format( time.time()-start_time, '.3f') )
-			# 	str_time_exec=" ".join(ls_time_exec)
-			# 	FileUtil.save_testlog('test_results', 'update_DataAC.log', str_time_exec)
-			# time.sleep(args.wait_interval)
+			audit_data(args.id) 
+			# logger.info("exec_time: {} ms".format( format( (time.time()-start_time)*1000, '.3f')  ))
+			# ls_time_exec.append(format( (time.time()-start_time)*1000, '.3f' ))
+			# str_time_exec=" ".join(ls_time_exec)
+
+			# FileUtil.save_testlog('test_results', 'verify_tokenData.log', str_time_exec)
+
+			time.sleep(args.wait_interval)
 	elif(args.test_func==10):
 		test_sym(args)
 	elif(args.test_func==11):
