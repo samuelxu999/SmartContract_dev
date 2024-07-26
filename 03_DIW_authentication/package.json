@@ -1,0 +1,27 @@
+{
+  "name": "DTH_NFT",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox": "^1.0.2",
+    "@nomiclabs/hardhat-truffle5": "^2.0.6",
+    "@openzeppelin/test-helpers": "^0.5.15",
+    "chai": "^4.3.6",
+    "hardhat": "^2.10.2"
+  },
+  "dependencies": {
+    "-": "^0.0.1",
+    "@openzeppelin/contracts": "4.7.3",
+    "ganache": "^7.9.2",
+    "global": "^4.4.0",
+    "package.json": "^2.0.1",
+    "web3": "^1.7.5"
+  }
+}
