@@ -1,8 +1,6 @@
 /* This is a demo test script to acces diamond facet */
 /* global contract artifacts web3 before it assert */
 
-const assert = require('chai').assert
-
 // Initialize web3 instance
 const { Web3 } = require('web3');
 const web3 = new Web3();
@@ -40,6 +38,21 @@ function getSelectors (contract) {
   return selectors
 }
 
+function getSelectorByName (contract, name) {
+  const selector = contract.abi.reduce((acc, val) => {
+    if (val.name === name) {
+      // console.log(val.name)
+      // get function signature
+      let functionSignature = web3.eth.abi.encodeFunctionSignature(val);
+      acc.push(functionSignature)
+      return acc
+    } else {
+      return acc
+    }
+  }, [])
+  return selector
+}
+
 function removeItem (array, item) {
   array.splice(array.indexOf(item), 1)
   return array
@@ -59,23 +72,13 @@ function getRandomInt(max) {
 
 
 async function DiamondTest() {
-  // let diamondCutFacet
-  // let diamondLoupeFacet
-  // // eslint-disable-next-line no-unused-vars
-  // let ownershipFacet
-  // // let diamond = diamond_address
-  // let test1Facet
-  // let test2Facet
-  // let result
   var addresses = []
-  // var account
-
 
   const zeroAddress = '0x0000000000000000000000000000000000000000'
   // set diamond address
-  const diamond_address = '0x03e973148285B8c30f2AA20189Bae6f58eb42119'
-  const test1Facet_address = '0x9a669870ac09fd87164C8E3bCD14a788e4a18e45'
-  const test2Facet_address = '0x440BD1561F8CC52Cc57ccc36c59539C2C01748B7'
+  const diamond_address = '0x5a971550087777b6589afB2D7aFA29aeFd7a5E88'
+  const test1Facet_address = '0x646eB7D385d0B51A57ebD255050272322E171937'
+  const test2Facet_address = '0x581B12229b133b59C136145A1220d5126992441a'
 
 
   var diamondCutFacet = new web3.eth.Contract(DiamondCutFacet.abi, diamond_address);
@@ -122,20 +125,27 @@ async function DiamondTest() {
 
   console.log('should get all the facets and function selectors of the diamond -- call to facets function')
   result = await diamondLoupeFacet.methods.facets().call()
-  console.log(result[0].facetAddress == addresses[0])
+  for (let i = 0; i < result.length; i++) {
+    console.log(result[i].facetAddress)
+    console.log(result[i].functionSelectors)
+    console.log(result[i].facetAddress == addresses[i])
+  }
 
-  console.log('should add test1 functions')
+  //------------- Add all test1 Facet functions ------------------------------
+  console.log('should add all test1 functions')
   selectors = getSelectors(Test1Facet).slice(0, -1)
   console.log(selectors)
   addresses.push(test1Facet_address)
-  // await diamondCutFacet.methods
-  //   .diamondCut([[test1Facet_address, FacetCutAction.Add, selectors]], zeroAddress, '0x')
-  //   .send({ from: test_account, gas: 1000000 })
+  await diamondCutFacet.methods
+    .diamondCut([[test1Facet_address, FacetCutAction.Add, selectors]], zeroAddress, '0x')
+    .send({ from: test_account, gas: 1000000 })
   result = await diamondLoupeFacet.methods.facetFunctionSelectors(addresses[3]).call()
   console.log(result)
 
-  console.log('should test1 function call MyAddress')
+  //------------- Run test1 Facet functions -----------------------------------
   var test1Facet = new web3.eth.Contract(Test1Facet.abi, diamond_address);
+
+  console.log('should test1 function call MyAddress')
   await test1Facet.methods.test1Func1(addresses[1]).send({ from: test_account, gas: 1000000 })
   myAddress = await test1Facet.methods.test1Func2().call()
   console.log(myAddress)
@@ -145,16 +155,43 @@ async function DiamondTest() {
   myNum = await test1Facet.methods.test1Func4().call()
   console.log(myNum)
 
+  //------------- Remove and Add some test1 Facet functions ---------------------
+  console.log('should remove some test1 functions')
+  removeSelectors = getSelectorByName(Test1Facet, 'test1Func2')
+  console.log(removeSelectors)
+  await diamondCutFacet.methods
+    .diamondCut([[zeroAddress, FacetCutAction.Remove, removeSelectors]], zeroAddress, '0x')
+    .send({ from: test_account, gas: 6000000 })
+  result = await diamondLoupeFacet.methods.facetFunctionSelectors(addresses[3]).call()
+  console.log(result)
+
+  console.log('should add some test1 functions')
+  addSelectors = getSelectorByName(Test1Facet, 'test1Func2')
+  console.log(addSelectors)
+  await diamondCutFacet.methods
+    .diamondCut([[test1Facet_address, FacetCutAction.Add, addSelectors]], zeroAddress, '0x')
+    .send({ from: test_account, gas: 1000000 })
+  result = await diamondLoupeFacet.methods.facetFunctionSelectors(addresses[3]).call()
+  console.log(result)
+
+  //------------- Remove all test1 Facet functions ---------------------
+  console.log('should remove all test1 functions')
+  removeSelectors = getSelectors(Test1Facet).slice(0, -1)
+  console.log(removeSelectors)
+  await diamondCutFacet.methods
+    .diamondCut([[zeroAddress, FacetCutAction.Remove, removeSelectors]], zeroAddress, '0x')
+    .send({ from: test_account, gas: 6000000 })
+  result = await diamondLoupeFacet.methods.facetFunctionSelectors(addresses[3]).call()
+  console.log(result)
+
+
+  //------------- Run LoupeFacet functions to show facet status -----------------------------------
+  console.log('LoupeFacet functions: show facet status')
   result = await diamondLoupeFacet.methods.facets().call()
-  console.log(result.length)
+  console.log(result)
 
   result = await diamondLoupeFacet.methods.facetAddresses().call()
   console.log(result)
-
-  // console.log('should replace test1 function')
-  // selectors = getSelectors(Test1Facet)
-  // console.log(selectors)
-
 }
 
 DiamondTest()
