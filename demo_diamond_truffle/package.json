@@ -4,7 +4,6 @@
   "description": "Gas-optimized diamond for adding/replacing/removing functions.",
   "main": "index.js",
   "scripts": {
-    "prettier": "prettier --write contracts/**/*.sol",
     "deploy": "truffle migrate --reset",
     "test": "truffle test"
   },
@@ -20,11 +19,9 @@
   "devDependencies": {
     "@codechecks/client": "^0.1.10",
     "eth-gas-reporter": "^0.2.17",
-    "ganache-cli": "^6.12.2",
     "prettier": "^2.1.1",
     "prettier-plugin-solidity": "^1.0.0-alpha.57",
     "standard": "^14.3.4",
-    "typescript": "^4.0.2",
-    "chai": "^4.3.4"
+    "typescript": "^4.0.2"
   }
 }
