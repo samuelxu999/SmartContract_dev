@@ -28,6 +28,11 @@ npm run deploy
 npm run test
 ```
 
+## Run js script to call functions of diamond:
+```console
+node scripts/diamond_demo.js
+```
+
 ## Facet Information
 However the `facetAddress` loupe function is gas efficient and can be called in on-chain transactions.
 
