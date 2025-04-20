@@ -1,0 +1,10 @@
+{
+"HttpProvider": "http://127.0.0.1:8544",
+"NFT_Data": "0x5d5A851e62338c1F0C1488089099E528436E3fb4",
+"host_account":"0x072d8911B302730FB5a9A6778E61CDD32733CB1E",
+"other_account":"0xa8148552Ba94F1767068809Dbe38810ada87e708",
+"token1": "5041",
+"token2": "5042",
+"token3": "5043",
+"token4": "5044"
+}

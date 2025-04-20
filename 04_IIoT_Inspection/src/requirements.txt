@@ -1,0 +1,4 @@
+cryptography==3.3.2
+pycrypto==2.6.1
+web3
+Flask
